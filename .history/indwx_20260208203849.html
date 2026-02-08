@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f3f4f6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 8px;
             overflow-x: hidden;
@@ -162,81 +162,6 @@
             transform: translateY(-2px);
         }
 
-        /* User Avatar Styles */
-        .user-avatar-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: 2px solid white;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            color: white;
-            font-weight: 700;
-            padding: 0;
-        }
-
-        .user-avatar-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .user-avatar-btn svg {
-            width: 22px;
-            height: 22px;
-            stroke: white;
-            stroke-width: 2;
-            fill: none;
-        }
-
-        .user-dropdown {
-            display: none;
-            position: absolute;
-            top: calc(100% + 10px);
-            right: 0;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            padding: 12px 0;
-            min-width: 180px;
-            z-index: 1000;
-        }
-
-        .user-dropdown.active {
-            display: block;
-        }
-
-        .user-dropdown-item {
-            display: block;
-            width: 100%;
-            padding: 12px 20px;
-            border: none;
-            background: none;
-            text-align: left;
-            cursor: pointer;
-            font-size: 0.95em;
-            color: #333;
-            transition: all 0.2s;
-        }
-
-        .user-dropdown-item:hover {
-            background: #f3f4f6;
-            padding-left: 24px;
-        }
-
-        .user-dropdown-logout {
-            border-top: 1px solid #e5e7eb;
-            color: #ef4444;
-        }
-
-        .user-dropdown-logout:hover {
-            background: #fee2e2;
-        }
-
         /* Hamburger Menu Styles */
         .hamburger-menu {
             display: none;
@@ -276,8 +201,8 @@
         .mobile-menu {
             display: none;
             position: absolute;
-            top: calc(100% + 5px);
-            right: 0px;
+            top: 60px;
+            right: 10px;
             background: rgba(255, 255, 255, 0.98);
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -334,9 +259,6 @@
             color: #667eea;
             font-size: 1.8em;
             margin-bottom: 5px;
-            white-space: normal;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
         }
 
         .subtitle {
@@ -504,14 +426,6 @@
             border: 2px solid #e5e7eb;
             border-radius: 8px;
             font-size: 1em;
-            min-width: 0;
-            width: 100%;
-        }
-
-        .time-input::placeholder {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .stats {
@@ -748,20 +662,6 @@
                 display: none;
             }
 
-            .user-avatar-btn {
-                width: 36px;
-                height: 36px;
-            }
-
-            .user-avatar-btn svg {
-                width: 20px;
-                height: 20px;
-            }
-
-            .user-dropdown {
-                min-width: 160px;
-            }
-
             .hamburger-menu {
                 display: flex;
             }
@@ -979,24 +879,8 @@
                 display: none;
             }
 
-            .user-avatar-btn {
-                width: 32px;
-                height: 32px;
-            }
-
-            .user-avatar-btn svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .user-dropdown {
-                min-width: 150px;
-                top: calc(100% + 8px);
-            }
-
             .hamburger-menu {
                 display: flex;
-                padding: 5px 6px;
             }
 
             .grid {
@@ -1233,43 +1117,8 @@
                 font-size: 1.1rem;
             }
 
-            header {
-                padding: 8px;
-                margin-bottom: 6px;
-            }
-
             header h1 {
-                font-size: 0.95em;
-                margin-bottom: 2px;
-            }
-
-            header .subtitle {
-                font-size: 0.65em;
-            }
-
-            .dashboard-header {
-                gap: 4px;
-                margin-bottom: 4px;
-            }
-
-            .user-avatar-btn {
-                width: 30px;
-                height: 30px;
-            }
-
-            .user-avatar-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            .user-dropdown {
-                min-width: 140px;
-                top: calc(100% + 6px);
-            }
-
-            .hamburger-menu span {
-                width: 20px;
-                height: 2px;
+                font-size: 1.1em;
             }
         }
     </style>
@@ -1323,25 +1172,15 @@
     <!-- Dashboard Section -->
     <div id="dashboard" class="container">
         <div class="dashboard-header">
-            <div style="flex: 1; min-width: 0; overflow: hidden;">
+            <div style="flex: 1;">
                 <header>
                     <h1>💧 Smart Irrigation System</h1>
                     <p class="subtitle">Automated Water Management Dashboard</p>
                 </header>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0; position: relative;">
-                <div style="position: relative;">
-                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()" title="User Profile">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="8" r="4"></circle>
-                            <path d="M 12 14 C 7 14 3 17 3 21 L 21 21 C 21 17 17 14 12 14 Z"></path>
-                        </svg>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <button class="user-dropdown-item" id="userNameDisplay">👤 User</button>
-                        <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()">🚪 Logout</button>
-                    </div>
-                </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <span class="user-info" id="userInfo">User</span>
+                <button class="btn-logout" onclick="handleLogout()">Logout</button>
                 <button class="hamburger-menu" id="hamburgerBtn" onclick="toggleMobileMenu()">
                     <span></span>
                     <span></span>
@@ -1525,30 +1364,12 @@
             menu.classList.remove('active');
         }
 
-        // User Dropdown Functions
-        function toggleUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('active');
-        }
-
-        function closeUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.remove('active');
-        }
-
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             const hamburger = document.getElementById('hamburgerBtn');
             const menu = document.getElementById('mobileMenu');
-            const userAvatarBtn = document.getElementById('userAvatarBtn');
-            const userDropdown = document.getElementById('userDropdown');
-            
             if (hamburger && menu && !hamburger.contains(e.target) && !menu.contains(e.target)) {
                 closeMobileMenu();
-            }
-            
-            if (userAvatarBtn && userDropdown && !userAvatarBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-                closeUserDropdown();
             }
         });
 
@@ -1637,7 +1458,7 @@
 
                 if (userData.status === 'success') {
                     currentUser = userData.user;
-                    document.getElementById('userNameDisplay').textContent = '👤 ' + currentUser.username;
+                    document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.username;
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
 
@@ -1866,7 +1687,6 @@
         async function handleLogout() {
             try {
                 closeMobileMenu(); // Close mobile menu if open
-                closeUserDropdown(); // Close user dropdown if open
                 await fetch(API_BASE + 'auth.php?action=logout');
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('dashboard').style.display = 'none';

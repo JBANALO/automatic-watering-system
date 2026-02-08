@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Irrigation System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Login/Auth Styles */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-card h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+
+        .auth-card .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .toggle-form button {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #ef4444;
+            color: #c00;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        #dashboard {
+            display: none;
+        }
+
+        /* Dashboard Header */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .user-info {
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 18px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-indicator.active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-indicator.inactive {
+            background: #ef4444;
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .control-btn.start {
+            background: #10b981;
+            color: white;
+        }
+
+        .control-btn.start:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .control-btn.stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .control-btn.stop:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .zone {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .zone-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #cbd5e1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #10b981;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .moisture-bar {
+            width: 100%;
+            height: 25px;
+            background: #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .moisture-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24 0%, #10b981 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .schedule-time {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .time-input {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .alert {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #92400e;
+        }
+
+        .weather-stat {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .weather-stat-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .weather-stat-value {
+            font-size: 1.875rem;
+            font-weight: bold;
+        }
+
+        .weather-stat-label {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .weather-setting {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .weather-setting:last-child {
+            margin-bottom: 0;
+        }
+
+        .weather-checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .weather-checkbox {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+
+        .weather-checkbox-text {
+            color: #333;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .card h2 {
+                font-size: 1.1em;
+                margin-bottom: 15px;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .control-btn {
+                padding: 12px;
+                font-size: 0.95em;
+            }
+
+            .zone {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-time {
+                grid-template-columns: 1fr;
+            }
+
+            .icon {
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .card h2 {
+                font-size: 1em;
+            }
+
+            .auth-card {
+                padding: 20px;
+                border-radius: 10px;
+            }
+
+            .control-btn {
+                padding: 10px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
+            .toggle-switch {
+                width: 50px;
+                height: 26px;
+            }
+
+            .toggle-slider {
+                width: 20px;
+                height: 20px;
+            }
+
+            .toggle-switch.active .toggle-slider {
+                transform: translateX(24px);
+            }
+
+            .weather-stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💧 Smart Irrigation System</h1>
+            <p class="subtitle">Automated Water Management Dashboard</p>
+        </header>
+
+        <div class="grid">
+            <!-- System Status -->
+            <div class="card">
+                <h2>
+                    <span class="status-indicator" id="systemStatus"></span>
+                    System Status
+                </h2>
+                
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                        <span style="font-weight: 600; color: #333;">🤖 Auto Mode</span>
+                        <div class="toggle-switch active" id="autoModeToggle" onclick="toggleAutoMode(this)">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </label>
+                    <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Automatically waters zones when soil moisture drops below threshold</p>
+                </div>
+
+                <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 15px; border-radius: 10px; margin-bottom: 20px;" id="autoStatus">
+                    <div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div>
+                    <div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Moisture Threshold
+                    </label>
+                    <input type="range" id="thresholdSlider" min="30" max="80" value="50" 
+                           style="width: 100%;" oninput="updateThreshold(this.value)">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666; margin-top: 5px;">
+                        <span>30%</span>
+                        <span id="thresholdValue" style="font-weight: 600; color: #667eea;">50%</span>
+                        <span>80%</span>
+                    </div>
+                    <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Water zones automatically when moisture falls below this level</p>
+                </div>
+                
+                <button class="control-btn start" id="startBtn" onclick="startSystem()">
+                    ▶ Manual Start
+                </button>
+                <button class="control-btn stop" id="stopBtn" onclick="stopSystem()" disabled>
+                    ⏹ Stop All
+                </button>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="dailyUsage">245</div>
+                        <div class="stat-label">Liters Today</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="runtime">45</div>
+                        <div class="stat-label">Minutes Active</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone Control -->
+            <div class="card">
+                <h2>🌱 Zone Control</h2>
+                
+                <div class="zone">
+                    <div class="zone-header">
+                        <span class="zone-name">Front Garden</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="zone-activity" id="zone1Activity" style="display: none; color: #10b981; font-size: 0.9em; font-weight: 600;">💧 Watering...</span>
+                            <div class="toggle-switch" id="zone1Toggle" onclick="toggleZone(this, 1)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="moisture-bar">
+                        <div class="moisture-fill" id="zone1Moisture" style="width: 65%">65%</div>
+                    </div>
+                </div>
+
+                <div class="zone">
+                    <div class="zone-header">
+                        <span class="zone-name">Backyard Lawn</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="zone-activity" id="zone2Activity" style="display: none; color: #10b981; font-size: 0.9em; font-weight: 600;">💧 Watering...</span>
+                            <div class="toggle-switch" id="zone2Toggle" onclick="toggleZone(this, 2)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="moisture-bar">
+                        <div class="moisture-fill" id="zone2Moisture" style="width: 48%">48%</div>
+                    </div>
+                </div>
+
+                <div class="zone">
+                    <div class="zone-header">
+                        <span class="zone-name">Vegetable Garden</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="zone-activity" id="zone3Activity" style="display: none; color: #10b981; font-size: 0.9em; font-weight: 600;">💧 Watering...</span>
+                            <div class="toggle-switch active" id="zone3Toggle" onclick="toggleZone(this, 3)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="moisture-bar">
+                        <div class="moisture-fill" id="zone3Moisture" style="width: 82%">82%</div>
+                    </div>
+                </div>
+
+                <div class="zone">
+                    <div class="zone-header">
+                        <span class="zone-name">Side Pathway</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="zone-activity" id="zone4Activity" style="display: none; color: #10b981; font-size: 0.9em; font-weight: 600;">💧 Watering...</span>
+                            <div class="toggle-switch" id="zone4Toggle" onclick="toggleZone(this, 4)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="moisture-bar">
+                        <div class="moisture-fill" id="zone4Moisture" style="width: 55%">55%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Settings -->
+            <div class="card">
+                <h2>⏰ Schedule Settings</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Morning Schedule
+                    </label>
+                    <div class="schedule-time">
+                        <input type="time" class="time-input" value="06:00">
+                        <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Evening Schedule
+                    </label>
+                    <div class="schedule-time">
+                        <input type="time" class="time-input" value="18:00">
+                        <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                    </div>
+                </div>
+
+                <button class="control-btn" style="background: #667eea; color: white;" onclick="saveSchedule()">
+                    💾 Save Schedule
+                </button>
+
+                <div class="alert">
+                    <strong>⚠️ Next Scheduled Run:</strong><br>
+                    Today at 6:00 PM for 30 minutes
+                </div>
+            </div>
+
+            <!-- Weather & Sensors -->
+            <div class="card">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v2"></path>
+                        <path d="m4.93 4.93 1.41 1.41"></path>
+                        <path d="M20 12h2"></path>
+                        <path d="m19.07 4.93-1.41 1.41"></path>
+                        <path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"></path>
+                        <path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"></path>
+                    </svg>
+                    Weather & Sensors
+                </h2>
+                
+                <!-- Weather Stats -->
+                <div class="weather-stat">
+                    <div class="weather-stat-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>
+                        </svg>
+                        <div class="weather-stat-value">28°C</div>
+                    </div>
+                    <div class="weather-stat-label">Current Temperature</div>
+                </div>
+
+                <div class="weather-stat">
+                    <div class="weather-stat-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                        </svg>
+                        <div class="weather-stat-value">65%</div>
+                    </div>
+                    <div class="weather-stat-label">Humidity</div>
+                </div>
+
+                <div class="weather-stat">
+                    <div class="weather-stat-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                            <path d="M16 14v6"></path>
+                            <path d="M8 14v6"></path>
+                            <path d="M12 16v6"></path>
+                        </svg>
+                        <div class="weather-stat-value">0mm</div>
+                    </div>
+                    <div class="weather-stat-label">Rain Today</div>
+                </div>
+
+                <!-- Settings -->
+                <div class="weather-setting">
+                    <label class="weather-checkbox-label">
+                        <input type="checkbox" id="skipRain" checked class="weather-checkbox">
+                        <span class="weather-checkbox-text">Skip watering if rain detected</span>
+                    </label>
+                </div>
+
+                <div class="weather-setting">
+                    <label class="weather-checkbox-label">
+                        <input type="checkbox" id="autoAdjust" checked class="weather-checkbox">
+                        <span class="weather-checkbox-text">Auto-adjust based on soil moisture</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let systemRunning = false;
+        let autoMode = true;
+        let dailyUsage = 245;
+        let runtime = 45;
+        let moistureThreshold = 50;
+        
+        // Zone moisture levels
+        let zones = [
+            { id: 1, moisture: 65, enabled: false, watering: false },
+            { id: 2, moisture: 48, enabled: false, watering: false },
+            { id: 3, moisture: 82, enabled: true, watering: false },
+            { id: 4, moisture: 55, enabled: false, watering: false }
+        ];
+
+        // Auto-monitoring interval
+        setInterval(() => {
+            if (autoMode) {
+                checkAndWaterZones();
+            }
+            
+            // Simulate moisture decrease over time
+            zones.forEach(zone => {
+                if (!zone.watering) {
+                    zone.moisture -= Math.random() * 0.3; // Slowly decrease
+                    if (zone.moisture < 0) zone.moisture = 0;
+                }
+            });
+            
+            updateZoneMoisture();
+        }, 2000);
+
+        function checkAndWaterZones() {
+            zones.forEach(zone => {
+                if (zone.enabled && !zone.watering && zone.moisture < moistureThreshold) {
+                    startWateringZone(zone.id);
+                }
+            });
+        }
+
+        function startWateringZone(zoneId) {
+            const zone = zones[zoneId - 1];
+            zone.watering = true;
+            
+            document.getElementById(`zone${zoneId}Activity`).style.display = 'inline';
+            document.getElementById('systemStatus').className = 'status-indicator active';
+            
+            // Water until threshold + 20% is reached
+            const waterInterval = setInterval(() => {
+                if (zone.moisture >= moistureThreshold + 20 || !zone.enabled) {
+                    zone.watering = false;
+                    document.getElementById(`zone${zoneId}Activity`).style.display = 'none';
+                    clearInterval(waterInterval);
+                    
+                    // Check if any zone is still watering
+                    const anyWatering = zones.some(z => z.watering);
+                    if (!anyWatering) {
+                        document.getElementById('systemStatus').className = 'status-indicator inactive';
+                    }
+                    return;
+                }
+                
+                zone.moisture += 0.8;
+                dailyUsage += 2;
+                runtime += 1;
+                
+                if (zone.moisture > 100) zone.moisture = 100;
+                
+                updateDisplay();
+                updateZoneMoisture();
+            }, 1000);
+        }
+
+        function updateZoneMoisture() {
+            zones.forEach(zone => {
+                const moisture = Math.round(zone.moisture);
+                const element = document.getElementById(`zone${zone.id}Moisture`);
+                element.style.width = moisture + '%';
+                element.textContent = moisture + '%';
+            });
+        }
+
+        function toggleAutoMode(element) {
+            autoMode = !autoMode;
+            element.classList.toggle('active');
+            
+            const autoStatus = document.getElementById('autoStatus');
+            if (autoMode) {
+                autoStatus.innerHTML = '<div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div><div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>';
+                autoStatus.style.background = '#f0fdf4';
+                autoStatus.style.borderColor = '#86efac';
+            } else {
+                autoStatus.innerHTML = '<div style="font-weight: 600; color: #92400e; margin-bottom: 5px;">⏸️ Auto Mode Disabled</div><div style="font-size: 0.85em; color: #b45309;">Manual control only</div>';
+                autoStatus.style.background = '#fef3c7';
+                autoStatus.style.borderColor = '#fcd34d';
+            }
+        }
+
+        function updateThreshold(value) {
+            moistureThreshold = parseInt(value);
+            document.getElementById('thresholdValue').textContent = value + '%';
+        }
+
+        function startSystem() {
+            systemRunning = true;
+            document.getElementById('systemStatus').className = 'status-indicator active';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            
+            // Manual start - water all enabled zones
+            zones.forEach(zone => {
+                if (zone.enabled) {
+                    startWateringZone(zone.id);
+                }
+            });
+        }
+
+        function stopSystem() {
+            systemRunning = false;
+            
+            // Stop all watering
+            zones.forEach(zone => {
+                zone.watering = false;
+                document.getElementById(`zone${zone.id}Activity`).style.display = 'none';
+            });
+            
+            document.getElementById('systemStatus').className = 'status-indicator inactive';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        function updateDisplay() {
+            document.getElementById('dailyUsage').textContent = dailyUsage;
+            document.getElementById('runtime').textContent = runtime;
+        }
+
+        function toggleZone(element, zoneId) {
+            element.classList.toggle('active');
+            const zone = zones[zoneId - 1];
+            zone.enabled = element.classList.contains('active');
+            
+            const zoneName = element.parentElement.parentElement.querySelector('.zone-name').textContent;
+            console.log(`Zone ${zoneId} (${zoneName}):`, zone.enabled ? 'ENABLED' : 'DISABLED');
+            
+            if (!zone.enabled && zone.watering) {
+                zone.watering = false;
+                document.getElementById(`zone${zoneId}Activity`).style.display = 'none';
+            }
+        }
+
+        function saveSchedule() {
+            alert('Schedule saved successfully! ✅\n\nYour irrigation times have been updated.');
+        }
+
+        // Initialize system status as inactive
+        document.getElementById('systemStatus').className = 'status-indicator inactive';
+    </script>
+</body>
+</html>

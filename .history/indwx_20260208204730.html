@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f3f4f6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 8px;
             overflow-x: hidden;
@@ -173,24 +173,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: 2px solid white;
             cursor: pointer;
+            font-size: 1.2em;
             transition: all 0.3s;
             position: relative;
             color: white;
             font-weight: 700;
-            padding: 0;
         }
 
         .user-avatar-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .user-avatar-btn svg {
-            width: 22px;
-            height: 22px;
-            stroke: white;
-            stroke-width: 2;
-            fill: none;
         }
 
         .user-dropdown {
@@ -748,20 +740,6 @@
                 display: none;
             }
 
-            .user-avatar-btn {
-                width: 36px;
-                height: 36px;
-            }
-
-            .user-avatar-btn svg {
-                width: 20px;
-                height: 20px;
-            }
-
-            .user-dropdown {
-                min-width: 160px;
-            }
-
             .hamburger-menu {
                 display: flex;
             }
@@ -977,21 +955,6 @@
                 padding: 7px 8px;
                 font-size: 0.8em;
                 display: none;
-            }
-
-            .user-avatar-btn {
-                width: 32px;
-                height: 32px;
-            }
-
-            .user-avatar-btn svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .user-dropdown {
-                min-width: 150px;
-                top: calc(100% + 8px);
             }
 
             .hamburger-menu {
@@ -1252,21 +1215,6 @@
                 margin-bottom: 4px;
             }
 
-            .user-avatar-btn {
-                width: 30px;
-                height: 30px;
-            }
-
-            .user-avatar-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            .user-dropdown {
-                min-width: 140px;
-                top: calc(100% + 6px);
-            }
-
             .hamburger-menu span {
                 width: 20px;
                 height: 2px;
@@ -1331,12 +1279,7 @@
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0; position: relative;">
                 <div style="position: relative;">
-                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()" title="User Profile">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="8" r="4"></circle>
-                            <path d="M 12 14 C 7 14 3 17 3 21 L 21 21 C 21 17 17 14 12 14 Z"></path>
-                        </svg>
-                    </button>
+                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()" title="User Profile">👤</button>
                     <div class="user-dropdown" id="userDropdown">
                         <button class="user-dropdown-item" id="userNameDisplay">👤 User</button>
                         <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()">🚪 Logout</button>
@@ -1525,30 +1468,12 @@
             menu.classList.remove('active');
         }
 
-        // User Dropdown Functions
-        function toggleUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('active');
-        }
-
-        function closeUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.remove('active');
-        }
-
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             const hamburger = document.getElementById('hamburgerBtn');
             const menu = document.getElementById('mobileMenu');
-            const userAvatarBtn = document.getElementById('userAvatarBtn');
-            const userDropdown = document.getElementById('userDropdown');
-            
             if (hamburger && menu && !hamburger.contains(e.target) && !menu.contains(e.target)) {
                 closeMobileMenu();
-            }
-            
-            if (userAvatarBtn && userDropdown && !userAvatarBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-                closeUserDropdown();
             }
         });
 
@@ -1637,7 +1562,7 @@
 
                 if (userData.status === 'success') {
                     currentUser = userData.user;
-                    document.getElementById('userNameDisplay').textContent = '👤 ' + currentUser.username;
+                    document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.username;
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
 
@@ -1866,7 +1791,6 @@
         async function handleLogout() {
             try {
                 closeMobileMenu(); // Close mobile menu if open
-                closeUserDropdown(); // Close user dropdown if open
                 await fetch(API_BASE + 'auth.php?action=logout');
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('dashboard').style.display = 'none';
