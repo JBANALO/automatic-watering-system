@@ -129,6 +129,100 @@
 
         #dashboard {
             display: none;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation Styles */
+        .dashboard-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            color: #333;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .sidebar h3 {
+            color: #999;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            margin-top: 20px;
+        }
+
+        .sidebar h3:first-child {
+            margin-top: 0;
+        }
+
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            background: #f3f4f6;
+            color: #333;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: #e5e7eb;
+            transform: translateX(5px);
+            color: #667eea;
+        }
+
+        .nav-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .page-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        .page-title {
+            font-size: 2.2em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .page-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
         }
 
         /* Dashboard Header */
@@ -932,6 +1026,7 @@
             }
         }
 
+
         @media (max-width: 480px) {
             body {
                 padding: 4px;
@@ -1321,13 +1416,12 @@
     </div>
 
     <!-- Dashboard Section -->
-    <div id="dashboard" class="container">
-        <div class="dashboard-header">
+    <div id="dashboard">
+        <!-- Header -->
+        <div class="dashboard-header" style="background: white; padding: 20px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 0; width: 100%;">
             <div style="flex: 1; min-width: 0; overflow: hidden;">
-                <header>
-                    <h1>💧 Smart Irrigation System</h1>
-                    <p class="subtitle">Automated Water Management Dashboard</p>
-                </header>
+                <h1 style="margin: 0; font-size: 2em;">💧 Smart Irrigation System</h1>
+                <p class="subtitle" style="margin: 5px 0 0 0;">Web Management Dashboard</p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0; position: relative;">
                 <div style="position: relative;">
@@ -1342,158 +1436,188 @@
                         <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()">🚪 Logout</button>
                     </div>
                 </div>
-                <button class="hamburger-menu" id="hamburgerBtn" onclick="toggleMobileMenu()">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
             </div>
         </div>
 
-        <!-- Mobile Menu -->
-        <div class="mobile-menu" id="mobileMenu">
-            <button class="mobile-menu-item" onclick="closeMobileMenu()">📊 Dashboard</button>
-            <button class="mobile-menu-item mobile-menu-logout" onclick="handleLogout()">🚪 Logout</button>
-        </div>
+        <!-- Dashboard Wrapper with Sidebar -->
+        <div class="dashboard-wrapper">
+            <!-- Sidebar Navigation -->
+            <div class="sidebar">
+                <h3>Pages</h3>
+                <button class="nav-btn active" onclick="switchPage('system', this)">System Control</button>
+                <button class="nav-btn" onclick="switchPage('zones', this)">Zone Management</button>
+                <button class="nav-btn" onclick="switchPage('schedule', this)">Schedules</button>
+                <button class="nav-btn" onclick="switchPage('sensors', this)">Sensors & Weather</button>
+            </div>
 
-        <div class="grid">
-            <!-- System Status -->
-            <div class="card">
-                <h2>
-                    <span class="status-indicator" id="systemStatus"></span>
-                    System Status
-                </h2>
-                
-                <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                    <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-                        <span style="font-weight: 600; color: #333;">🤖 Auto Mode</span>
-                        <div class="toggle-switch active" id="autoModeToggle" onclick="toggleAutoMode(this)">
-                            <div class="toggle-slider"></div>
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- System Status Page -->
+                <div id="system-page" class="page-section active">
+                    <h2 class="page-title"> System Control</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>
+                                <span class="status-indicator" id="systemStatus"></span>
+                                System Status
+                            </h2>
+                            
+                            <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                                    <span style="font-weight: 600; color: #333;">🤖 Auto Mode</span>
+                                    <div class="toggle-switch active" id="autoModeToggle" onclick="toggleAutoMode(this)">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </label>
+                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Automatically waters zones when soil moisture drops below threshold</p>
+                            </div>
+
+                            <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 15px; border-radius: 10px; margin-bottom: 20px;" id="autoStatus">
+                                <div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div>
+                                <div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                    Moisture Threshold
+                                </label>
+                                <input type="range" id="thresholdSlider" min="30" max="80" value="50" 
+                                       style="width: 100%;" oninput="updateThreshold(this.value)">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666; margin-top: 5px;">
+                                    <span>30%</span>
+                                    <span id="thresholdValue" style="font-weight: 600; color: #667eea;">50%</span>
+                                    <span>80%</span>
+                                </div>
+                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Water zones automatically when moisture falls below this level</p>
+                            </div>
+                            
+                            <button class="control-btn start" id="startBtn" onclick="startSystem()">
+                                ▶ Manual Start
+                            </button>
+                            <button class="control-btn stop" id="stopBtn" onclick="stopSystem()" disabled>
+                                ⏹ Stop All
+                            </button>
+
+                            <div class="stats">
+                                <div class="stat-box">
+                                    <div class="stat-value" id="dailyUsage">245</div>
+                                    <div class="stat-label">Liters Today</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value" id="runtime">45</div>
+                                    <div class="stat-label">Minutes Active</div>
+                                </div>
+                            </div>
                         </div>
-                    </label>
-                    <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Automatically waters zones when soil moisture drops below threshold</p>
-                </div>
-
-                <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 15px; border-radius: 10px; margin-bottom: 20px;" id="autoStatus">
-                    <div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div>
-                    <div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                        Moisture Threshold
-                    </label>
-                    <input type="range" id="thresholdSlider" min="30" max="80" value="50" 
-                           style="width: 100%;" oninput="updateThreshold(this.value)">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666; margin-top: 5px;">
-                        <span>30%</span>
-                        <span id="thresholdValue" style="font-weight: 600; color: #667eea;">50%</span>
-                        <span>80%</span>
-                    </div>
-                    <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Water zones automatically when moisture falls below this level</p>
-                </div>
-                
-                <button class="control-btn start" id="startBtn" onclick="startSystem()">
-                    ▶ Manual Start
-                </button>
-                <button class="control-btn stop" id="stopBtn" onclick="stopSystem()" disabled>
-                    ⏹ Stop All
-                </button>
-
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="stat-value" id="dailyUsage">245</div>
-                        <div class="stat-label">Liters Today</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="runtime">45</div>
-                        <div class="stat-label">Minutes Active</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Zone Control -->
-            <div class="card">
-                <h2>🌱 Zone Control</h2>
-                <div id="zoneControl"></div>
-            </div>
-
-            <!-- Schedule Settings -->
-            <div class="card">
-                <h2>⏰ Schedule Settings</h2>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                        Morning Schedule
-                    </label>
-                    <div class="schedule-time">
-                        <input type="time" class="time-input" value="06:00">
-                        <input type="number" class="time-input" placeholder="Duration (min)" value="30">
                     </div>
                 </div>
 
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                        Evening Schedule
-                    </label>
-                    <div class="schedule-time">
-                        <input type="time" class="time-input" value="18:00">
-                        <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                <!-- Zone Management Page -->
+                <div id="zones-page" class="page-section">
+                    <h2 class="page-title">Zone Management</h2>
+                    <div class="page-content">
+                        <div class="card" style="grid-column: 1 / -1;">
+                            <h2>Zone Control</h2>
+                            <div id="zoneControl"></div>
+                        </div>
                     </div>
                 </div>
 
-                <button class="control-btn" style="background: #667eea; color: white;" onclick="saveSchedule()">
-                    💾 Save Schedule
-                </button>
+                <!-- Schedule Page -->
+                <div id="schedule-page" class="page-section">
+                    <h2 class="page-title"> Irrigation Schedules</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>Schedule Settings</h2>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                    Morning Schedule
+                                </label>
+                                <div class="schedule-time">
+                                    <input type="time" class="time-input" value="06:00">
+                                    <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                                </div>
+                            </div>
 
-                <div class="alert">
-                    <strong>⚠️ Next Scheduled Run:</strong><br>
-                    Today at 6:00 PM for 30 minutes
-                </div>
-            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                    Evening Schedule
+                                </label>
+                                <div class="schedule-time">
+                                    <input type="time" class="time-input" value="18:00">
+                                    <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                                </div>
+                            </div>
 
-            <!-- Weather & Sensors -->
-            <div class="card">
-                <h2>🌤️ Weather & Sensors</h2>
-                
-                <!-- Weather Stats -->
-                <div class="weather-stat">
-                    <div class="weather-stat-content">
-                        <span>🌡️</span>
-                        <div class="weather-stat-value">28°C</div>
+                            <button class="control-btn" style="background: #667eea; color: white;" onclick="saveSchedule()">
+                                💾 Save Schedule
+                            </button>
+
+                            <div class="alert">
+                                <strong>⚠️ Next Scheduled Run:</strong><br>
+                                Today at 6:00 PM for 30 minutes
+                            </div>
+                        </div>
                     </div>
-                    <div class="weather-stat-label">Current Temperature</div>
                 </div>
 
-                <div class="weather-stat">
-                    <div class="weather-stat-content">
-                        <span>💧</span>
-                        <div class="weather-stat-value">65%</div>
+                <!-- Sensors & Weather Page -->
+                <div id="sensors-page" class="page-section">
+                    <h2 class="page-title">Sensors & Weather</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>Weather & Sensors</h2>
+                            
+                            <!-- Weather Stats -->
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>🌡️</span>
+                                    <div class="weather-stat-value">28°C</div>
+                                </div>
+                                <div class="weather-stat-label">Current Temperature</div>
+                            </div>
+
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>💧</span>
+                                    <div class="weather-stat-value">65%</div>
+                                </div>
+                                <div class="weather-stat-label">Humidity</div>
+                            </div>
+
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>🌧️</span>
+                                    <div class="weather-stat-value">0mm</div>
+                                </div>
+                                <div class="weather-stat-label">Rain Today</div>
+                            </div>
+
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>💦</span>
+                                    <div class="weather-stat-value" id="tankLevel">100%</div>
+                                </div>
+                                <div class="weather-stat-label">Water Tank Level</div>
+                            </div>
+
+                            <!-- Settings -->
+                            <div class="weather-setting">
+                                <label class="weather-checkbox-label">
+                                    <input type="checkbox" id="skipRain" checked class="weather-checkbox">
+                                    <span class="weather-checkbox-text">Skip watering if rain detected</span>
+                                </label>
+                            </div>
+
+                            <div class="weather-setting">
+                                <label class="weather-checkbox-label">
+                                    <input type="checkbox" id="autoAdjust" checked class="weather-checkbox">
+                                    <span class="weather-checkbox-text">Auto-adjust based on soil moisture</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="weather-stat-label">Humidity</div>
-                </div>
-
-                <div class="weather-stat">
-                    <div class="weather-stat-content">
-                        <span>🌧️</span>
-                        <div class="weather-stat-value">0mm</div>
-                    </div>
-                    <div class="weather-stat-label">Rain Today</div>
-                </div>
-
-                <!-- Settings -->
-                <div class="weather-setting">
-                    <label class="weather-checkbox-label">
-                        <input type="checkbox" id="skipRain" checked class="weather-checkbox">
-                        <span class="weather-checkbox-text">Skip watering if rain detected</span>
-                    </label>
-                </div>
-
-                <div class="weather-setting">
-                    <label class="weather-checkbox-label">
-                        <input type="checkbox" id="autoAdjust" checked class="weather-checkbox">
-                        <span class="weather-checkbox-text">Auto-adjust based on soil moisture</span>
-                    </label>
                 </div>
             </div>
         </div>
@@ -1509,31 +1633,62 @@
         let moistureThreshold = 50;
         let zones = [];
         let systemSettings = {};
+        let currentTankLevel = 100;
+
+        // Page Navigation
+        function switchPage(pageId, button) {
+            // Hide all pages
+            const pages = document.querySelectorAll('.page-section');
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Remove active class from all nav buttons
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected page
+            const pageElement = document.getElementById(pageId + '-page');
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+            
+            // Mark button as active
+            if (button) {
+                button.classList.add('active');
+            }
+        }
 
         // Hamburger Menu Functions
         function toggleMobileMenu() {
             const hamburger = document.getElementById('hamburgerBtn');
             const menu = document.getElementById('mobileMenu');
-            hamburger.classList.toggle('active');
-            menu.classList.toggle('active');
+            if (hamburger && menu) {
+                hamburger.classList.toggle('active');
+                menu.classList.toggle('active');
+            }
         }
 
         function closeMobileMenu() {
             const hamburger = document.getElementById('hamburgerBtn');
             const menu = document.getElementById('mobileMenu');
-            hamburger.classList.remove('active');
-            menu.classList.remove('active');
+            if (hamburger && menu) {
+                hamburger.classList.remove('active');
+                menu.classList.remove('active');
+            }
         }
 
         // User Dropdown Functions
         function toggleUserDropdown() {
             const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('active');
+            if (dropdown) {
+                dropdown.classList.toggle('active');
+            }
         }
 
         function closeUserDropdown() {
             const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.remove('active');
+            if (dropdown) {
+                dropdown.classList.remove('active');
+            }
         }
 
         // Close menu when clicking outside
@@ -1639,7 +1794,7 @@
                     currentUser = userData.user;
                     document.getElementById('userNameDisplay').textContent = '👤 ' + currentUser.username;
                     document.getElementById('authSection').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
+                    document.getElementById('dashboard').style.display = 'flex';
 
                     await loadZones();
                     await loadSystemSettings();
@@ -1696,11 +1851,32 @@
                         if (zone) {
                             zone.moisture_level = sensor.moisture_level;
                         }
+                        // Update tank level from the first sensor reading
+                        if (sensor.tank_level !== undefined && sensor.tank_level !== null) {
+                            currentTankLevel = sensor.tank_level;
+                        }
                     });
                     updateZoneMoisture();
+                    updateTankLevel();
                 }
             } catch (error) {
                 console.error('Error loading sensor data:', error);
+            }
+        }
+
+        // Update tank level display
+        function updateTankLevel() {
+            const tankLevelEl = document.getElementById('tankLevel');
+            if (tankLevelEl) {
+                tankLevelEl.textContent = currentTankLevel + '%';
+                // Color coding: blue (full) > orange (mid) > red (low)
+                if (currentTankLevel >= 65) {
+                    tankLevelEl.style.color = '#667eea';
+                } else if (currentTankLevel >= 30) {
+                    tankLevelEl.style.color = '#f59e0b'; 
+                } else {
+                    tankLevelEl.style.color = '#ef4444';
+                }
             }
         }
 

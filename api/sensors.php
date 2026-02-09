@@ -32,6 +32,7 @@ function getLatestSensorData($user_id, $conn) {
             COALESCE(s.temperature, 0) as temperature,
             COALESCE(s.humidity, 0) as humidity,
             COALESCE(s.rainfall, 0) as rainfall,
+            COALESCE(s.tank_level, 100) as tank_level,
             s.recorded_at
         FROM zones z
         LEFT JOIN (
@@ -82,6 +83,7 @@ function updateSensorData($user_id, $conn) {
     $temperature = floatval($input['temperature'] ?? 0);
     $humidity = intval($input['humidity'] ?? 0);
     $rainfall = intval($input['rainfall'] ?? 0);
+    $tank_level = intval($input['tank_level'] ?? 100);
     
     // Verify zone belongs to user
     $check = $conn->query("SELECT id FROM zones WHERE id=$zone_id AND user_id=$user_id");
@@ -92,8 +94,9 @@ function updateSensorData($user_id, $conn) {
     }
     
     $moisture = min(100, max(0, $moisture));
-    $sql = "INSERT INTO sensor_data (zone_id, moisture_level, temperature, humidity, rainfall) 
-            VALUES ($zone_id, $moisture, $temperature, $humidity, $rainfall)";
+    $tank_level = min(100, max(0, $tank_level));
+    $sql = "INSERT INTO sensor_data (zone_id, moisture_level, temperature, humidity, rainfall, tank_level) 
+            VALUES ($zone_id, $moisture, $temperature, $humidity, $rainfall, $tank_level)";
     
     if ($conn->query($sql)) {
         // Update zone moisture level

@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     temperature FLOAT,
     humidity INT,
     rainfall INT DEFAULT 0,
+    tank_level INT DEFAULT 100,
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (zone_id) REFERENCES zones(id) ON DELETE CASCADE
 );
