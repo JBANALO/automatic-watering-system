@@ -610,7 +610,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
             margin-top: 20px;
         }
@@ -1497,6 +1497,9 @@
                             <button class="control-btn stop" id="stopBtn" onclick="stopSystem()" disabled>
                                 ⏹ Stop All
                             </button>
+                            <button class="control-btn" id="clearFaultBtn" onclick="clearPumpFault()" style="background: #f59e0b; color: white; display: none; margin-top: 10px;">
+                                🔧 Clear Pump Fault
+                            </button>
 
                             <div class="stats">
                                 <div class="stat-box">
@@ -1507,6 +1510,24 @@
                                     <div class="stat-value" id="runtime">45</div>
                                     <div class="stat-label">Minutes Active</div>
                                 </div>
+                                <div class="stat-box">
+                                    <div class="stat-value" id="pumpStatus" style="font-size: 1.5em;">Idle</div>
+                                    <div class="stat-label">Pump Status</div>
+                                </div>
+                            </div>
+
+                            <div class="weather-stat" style="margin-top: 16px;">
+                                <div class="weather-stat-content">
+                                    <div class="weather-stat-value" id="tankLevel">Inactive</div>
+                                </div>
+                                <div class="weather-stat-label">Water Tank Level</div>
+                            </div>
+
+                            <!-- Low Tank Alert -->
+                            <div id="lowTankAlert" class="alert" style="display: none; background: #f8d7da; border-color: #f5c6cb; color: #721c24; margin-top: 16px;">
+                                <strong>⚠️ Low Water Tank!</strong><br>
+                                <span style="font-size: 0.95em;">Water tank level is below 30%. Please refill the tank soon to prevent system shutdown.</span>
+                                <button onclick="hideLowTankAlert()" style="float: right; background: transparent; border: none; font-size: 1.2em; cursor: pointer;">×</button>
                             </div>
                         </div>
                     </div>
@@ -1535,8 +1556,8 @@
                                     Morning Schedule
                                 </label>
                                 <div class="schedule-time">
-                                    <input type="time" class="time-input" value="06:00">
-                                    <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                                    <input type="time" class="time-input" id="morningTime" value="06:00">
+                                    <input type="number" class="time-input" id="morningDuration" placeholder="Duration (min)" value="30" min="1" max="180">
                                 </div>
                             </div>
 
@@ -1545,8 +1566,8 @@
                                     Evening Schedule
                                 </label>
                                 <div class="schedule-time">
-                                    <input type="time" class="time-input" value="18:00">
-                                    <input type="number" class="time-input" placeholder="Duration (min)" value="30">
+                                    <input type="time" class="time-input" id="eveningTime" value="18:00">
+                                    <input type="number" class="time-input" id="eveningDuration" placeholder="Duration (min)" value="30" min="1" max="180">
                                 </div>
                             </div>
 
@@ -1554,9 +1575,10 @@
                                 💾 Save Schedule
                             </button>
 
-                            <div class="alert">
-                                <strong>⚠️ Next Scheduled Run:</strong><br>
-                                Today at 6:00 PM for 30 minutes
+                            <div class="alert" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+                                <strong>📅 Scheduled Runs:</strong><br>
+                                <div id="morningScheduleDisplay" style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Morning: 6:00 AM for 30 minutes</div>
+                                <div id="eveningScheduleDisplay" style="margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Evening: 6:00 PM for 30 minutes</div>
                             </div>
                         </div>
                     </div>
@@ -1594,14 +1616,6 @@
                                 <div class="weather-stat-label">Rain Today</div>
                             </div>
 
-                            <div class="weather-stat">
-                                <div class="weather-stat-content">
-                                    <span>💦</span>
-                                    <div class="weather-stat-value" id="tankLevel">100%</div>
-                                </div>
-                                <div class="weather-stat-label">Water Tank Level</div>
-                            </div>
-
                             <!-- Settings -->
                             <div class="weather-setting">
                                 <label class="weather-checkbox-label">
@@ -1634,6 +1648,12 @@
         let zones = [];
         let systemSettings = {};
         let currentTankLevel = 100;
+        let systemStartTime = null;
+        let systemTimer = null;
+        let litersPerMinute = 8; // 8 liters per minute (adjustable)
+        let lowTankAlertShown = false; // Track if low tank alert has been shown
+        let pumpFault = false; // Track pump fault status
+        let pumpLockout = false; // Track if pump is locked out due to empty tank
 
         // Page Navigation
         function switchPage(pageId, button) {
@@ -1799,6 +1819,7 @@
                     await loadZones();
                     await loadSystemSettings();
                     await loadSensorData();
+                    loadSavedSchedules();
 
                     startAutoMonitoring();
                 }
@@ -1851,13 +1872,17 @@
                         if (zone) {
                             zone.moisture_level = sensor.moisture_level;
                         }
-                        // Update tank level from the first sensor reading
-                        if (sensor.tank_level !== undefined && sensor.tank_level !== null) {
+                        // Update tank level from API only if system is NOT running
+                        // While system is running, tank level is calculated in real-time
+                        if (!systemRunning && sensor.tank_level !== undefined && sensor.tank_level !== null) {
                             currentTankLevel = sensor.tank_level;
                         }
                     });
                     updateZoneMoisture();
-                    updateTankLevel();
+                    // Only update display if system is not running
+                    if (!systemRunning) {
+                        updateTankLevel();
+                    }
                 }
             } catch (error) {
                 console.error('Error loading sensor data:', error);
@@ -1868,8 +1893,13 @@
         function updateTankLevel() {
             const tankLevelEl = document.getElementById('tankLevel');
             if (tankLevelEl) {
+                if (!systemRunning) {
+                    tankLevelEl.textContent = 'Inactive';
+                    tankLevelEl.style.color = '#9ca3af';
+                    return;
+                }
+
                 tankLevelEl.textContent = currentTankLevel + '%';
-                // Color coding: blue (full) > orange (mid) > red (low)
                 if (currentTankLevel >= 65) {
                     tankLevelEl.style.color = '#667eea';
                 } else if (currentTankLevel >= 30) {
@@ -1898,6 +1928,18 @@
                     </div>
                     <div class="moisture-bar">
                         <div class="moisture-fill" id="zone${zone.id}Moisture" style="width: ${zone.moisture_level}%">${zone.moisture_level}%</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
+                        <select id="zone${zone.id}Duration" class="time-input" style="flex: 1; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.9em;">
+                            <option value="5">5 minutes</option>
+                            <option value="10" selected>10 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="20">20 minutes</option>
+                            <option value="30">30 minutes</option>
+                        </select>
+                        <button class="control-btn" style="background: #10b981; color: white; padding: 8px 12px; flex: 1;" onclick="waterZoneNow(${zone.id})" id="zone${zone.id}WaterBtn">
+                             Water Now
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -1931,6 +1973,73 @@
                 if (zone) zone.enabled = enabled;
             } catch (error) {
                 console.error('Error toggling zone:', error);
+            }
+        }
+
+        // Manual zone watering
+        async function waterZoneNow(zoneId) {
+            const zone = zones.find(z => z.id === zoneId);
+            if (!zone) return;
+            
+            const durationSelect = document.getElementById(`zone${zoneId}Duration`);
+            const durationMinutes = parseInt(durationSelect.value);
+            const waterBtn = document.getElementById(`zone${zoneId}WaterBtn`);
+            const activitySpan = document.getElementById(`zone${zoneId}Activity`);
+            
+            // Disable button and show watering status
+            waterBtn.disabled = true;
+            waterBtn.style.opacity = '0.5';
+            activitySpan.style.display = 'inline';
+            
+            // Calculate liters
+            const totalLiters = Math.round(durationMinutes * litersPerMinute);
+            
+            try {
+                // Call API to record manual watering
+                const response = await fetch(API_BASE + 'zones.php?action=water_now', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        zone_id: zoneId, 
+                        duration_minutes: durationMinutes,
+                        liters: totalLiters
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Simulate watering for visual feedback
+                let elapsed = 0;
+                const wateringInterval = setInterval(() => {
+                    elapsed++;
+                    const progress = Math.min((elapsed / durationMinutes) * 100, 100);
+                    const moistureElement = document.getElementById(`zone${zoneId}Moisture`);
+                    if (moistureElement) {
+                        moistureElement.style.width = Math.min(zone.moisture_level + progress, 100) + '%';
+                    }
+                    
+                    if (elapsed >= durationMinutes) {
+                        clearInterval(wateringInterval);
+                        // Update zone moisture
+                        zone.moisture_level = Math.min(100, zone.moisture_level + 50);
+                        updateZoneMoisture();
+                        
+                        // Reset button
+                        waterBtn.disabled = false;
+                        waterBtn.style.opacity = '1';
+                        activitySpan.style.display = 'none';
+                        
+                        // Show success message
+                        alert(`✅ Zone Watering Complete!\n\n${zone.zone_name}\nDuration: ${durationMinutes} minutes\nWater Used: ${totalLiters} liters`);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error watering zone:', error);
+                waterBtn.disabled = false;
+                waterBtn.style.opacity = '1';
+                activitySpan.style.display = 'none';
+                alert('❌ Error watering zone. Please try again.');
             }
         }
 
@@ -1992,23 +2101,250 @@
 
         // Start system
         function startSystem() {
+            // Pump lockout - prevent starting if tank is too low
+            if (currentTankLevel < 20) {
+                pumpLockout = true;
+                setPumpFault();
+                alert('🚨 PUMP LOCKOUT!\n\nCannot start system - water tank level is too low (<20%).\nPlease refill the tank before starting.');
+                return;
+            }
+            
+            // Check for existing pump fault
+            if (pumpFault) {
+                alert('⚠️ PUMP FAULT DETECTED!\n\nPlease resolve the pump fault before starting the system.');
+                return;
+            }
+            
             systemRunning = true;
+            systemStartTime = Date.now();
+            pumpLockout = false;
             document.getElementById('systemStatus').className = 'status-indicator active';
             document.getElementById('startBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
+            
+            // Reset counters
+            document.getElementById('runtime').textContent = '0';
+            document.getElementById('dailyUsage').textContent = '0';
+            
+            // Update pump status to Running
+            const pumpStatus = document.getElementById('pumpStatus');
+            if (pumpStatus) {
+                pumpStatus.innerHTML = 'Running';
+                pumpStatus.style.color = '#10b981';
+            }
+
+            // Clear any existing timer
+            if (systemTimer) clearInterval(systemTimer);
+
+            // Update runtime, usage, and tank level every second
+            systemTimer = setInterval(() => {
+                const elapsedSeconds = Math.floor((Date.now() - systemStartTime) / 1000);
+                const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+                const totalLiters = Math.round((elapsedSeconds * litersPerMinute) / 60);
+
+                const runtimeEl = document.getElementById('runtime');
+                const dailyUsageEl = document.getElementById('dailyUsage');
+
+                if (runtimeEl) runtimeEl.textContent = elapsedMinutes;
+                if (dailyUsageEl) dailyUsageEl.textContent = totalLiters;
+                
+                // Decrease tank level (500L capacity = 100%)
+                const tankCapacity = 500;
+                const remainingLiters = Math.max(0, tankCapacity - totalLiters);
+                currentTankLevel = Math.round((remainingLiters / tankCapacity) * 100);
+                
+                // Auto-stop system if tank level reaches 15%
+                if (currentTankLevel <= 15) {
+                    pumpLockout = true;
+                    setPumpFault();
+                    stopSystem();
+                    alert('🚨 SYSTEM AUTO-STOPPED!\n\nWater tank critically low (≤15%) - PUMP LOCKOUT ENGAGED.\nPlease refill the tank before restarting the system.');
+                    return;
+                }
+                
+                // Update tank display
+                const tankLevelEl = document.getElementById('tankLevel');
+                if (tankLevelEl) {
+                    tankLevelEl.textContent = currentTankLevel + '%';
+                    // Color coding: blue (full) > orange (mid) > red (low)
+                    if (currentTankLevel >= 65) {
+                        tankLevelEl.style.color = '#667eea';
+                    } else if (currentTankLevel >= 30) {
+                        tankLevelEl.style.color = '#f59e0b'; 
+                    } else {
+                        tankLevelEl.style.color = '#ef4444';
+                    }
+                }
+                
+                // Show alert when tank reaches 30%
+                if (currentTankLevel <= 30 && !lowTankAlertShown) {
+                    lowTankAlertShown = true;
+                    showLowTankAlert();
+                }
+                // Reset alert flag when tank is above 30%
+                if (currentTankLevel > 30) {
+                    lowTankAlertShown = false;
+                }
+            }, 1000);
         }
 
         // Stop system
         function stopSystem() {
             systemRunning = false;
+            if (systemTimer) {
+                clearInterval(systemTimer);
+                systemTimer = null;
+            }
+            systemStartTime = null;
             document.getElementById('systemStatus').className = 'status-indicator inactive';
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
+            
+            // Update pump status to Idle (unless there's a fault)
+            const pumpStatus = document.getElementById('pumpStatus');
+            if (pumpStatus && !pumpFault) {
+                pumpStatus.innerHTML = '⚪ Idle';
+                pumpStatus.style.color = '#667eea';
+            }
+            
+            updateTankLevel();
+        }
+
+        // Set pump fault status
+        function setPumpFault() {
+            pumpFault = true;
+            const pumpStatus = document.getElementById('pumpStatus');
+            if (pumpStatus) {
+                pumpStatus.innerHTML = '🔴 Fault';
+                pumpStatus.style.color = '#ef4444';
+            }
+            // Show clear fault button
+            const clearFaultBtn = document.getElementById('clearFaultBtn');
+            if (clearFaultBtn) {
+                clearFaultBtn.style.display = 'block';
+            }
+        }
+
+        // Clear pump fault
+        function clearPumpFault() {
+            if (currentTankLevel >= 20) {
+                pumpFault = false;
+                pumpLockout = false;
+                const pumpStatus = document.getElementById('pumpStatus');
+                if (pumpStatus && !systemRunning) {
+                    pumpStatus.innerHTML = '⚪ Idle';
+                    pumpStatus.style.color = '#667eea';
+                }
+                // Hide clear fault button
+                const clearFaultBtn = document.getElementById('clearFaultBtn');
+                if (clearFaultBtn) {
+                    clearFaultBtn.style.display = 'none';
+                }
+                alert('✅ Pump fault cleared. System is ready to start.');
+            } else {
+                alert('⚠️ Cannot clear fault - tank level still below 20%.');
+            }
+        }
+
+        // Show low tank alert
+        function showLowTankAlert() {
+            const alertDiv = document.getElementById('lowTankAlert');
+            if (alertDiv) {
+                alertDiv.style.display = 'block';
+                // Optional: show browser alert as well
+                alert('⚠️ WARNING: Water tank level is below 30%!\nPlease refill the tank soon.');
+            }
+        }
+
+        // Hide low tank alert
+        function hideLowTankAlert() {
+            const alertDiv = document.getElementById('lowTankAlert');
+            if (alertDiv) {
+                alertDiv.style.display = 'none';
+            }
         }
 
         // Save schedule
         async function saveSchedule() {
+            const morningTime = document.getElementById('morningTime')?.value || '06:00';
+            const morningDuration = parseInt(document.getElementById('morningDuration')?.value || '30', 10);
+            const eveningTime = document.getElementById('eveningTime')?.value || '18:00';
+            const eveningDuration = parseInt(document.getElementById('eveningDuration')?.value || '30', 10);
+
+            if (!morningTime || morningDuration <= 0 || !eveningTime || eveningDuration <= 0) {
+                alert('⚠️ Please enter valid times and durations.');
+                return;
+            }
+
+            // Save to localStorage
+            const scheduleData = {
+                morning: { time: morningTime, duration: morningDuration },
+                evening: { time: eveningTime, duration: eveningDuration }
+            };
+            const userKey = currentUser?.id || currentUser?.username || 'guest';
+            localStorage.setItem('schedules:' + userKey, JSON.stringify(scheduleData));
+
+            // Update display with next scheduled run
+            updateNextScheduleDisplay(morningTime, morningDuration, eveningTime, eveningDuration);
+
+            // Show success message
             alert('Schedule saved successfully! ✅\n\nYour irrigation times have been updated.');
+        }
+
+        function updateNextScheduleDisplay(morningTime, morningDuration, eveningTime, eveningDuration) {
+            updateScheduleDisplay(morningTime, morningDuration, 'morningScheduleDisplay');
+            updateScheduleDisplay(eveningTime, eveningDuration, 'eveningScheduleDisplay');
+        }
+        
+        function updateScheduleDisplay(time, duration, elementId) {
+            const displayEl = document.getElementById(elementId);
+            if (displayEl) {
+                const formattedTime = convert24to12(time);
+                const label = elementId === 'morningScheduleDisplay' ? 'Morning' : 'Evening';
+                displayEl.textContent = label + ': ' + formattedTime + ' for ' + duration + ' minutes';
+            }
+        }
+
+        function convert24to12(time24) {
+            const [hours, minutes] = time24.split(':');
+            let hour = parseInt(hours, 10);
+            const min = minutes;
+            const period = hour >= 12 ? 'PM' : 'AM';
+            
+            if (hour > 12) {
+                hour -= 12;
+            } else if (hour === 0) {
+                hour = 12;
+            }
+            
+            return hour + ':' + min + ' ' + period;
+        }
+
+        function loadSavedSchedules() {
+            const userKey = currentUser?.id || currentUser?.username || 'guest';
+            const stored = localStorage.getItem('schedules:' + userKey);
+            if (!stored) return;
+
+            try {
+                const data = JSON.parse(stored);
+                if (data.morning) {
+                    const morningTime = document.getElementById('morningTime');
+                    const morningDuration = document.getElementById('morningDuration');
+                    if (morningTime) morningTime.value = data.morning.time;
+                    if (morningDuration) morningDuration.value = data.morning.duration;
+                }
+                if (data.evening) {
+                    const eveningTime = document.getElementById('eveningTime');
+                    const eveningDuration = document.getElementById('eveningDuration');
+                    if (eveningTime) eveningTime.value = data.evening.time;
+                    if (eveningDuration) eveningDuration.value = data.evening.duration;
+                }
+                if (data.morning && data.evening) {
+                    updateNextScheduleDisplay(data.morning.time, data.morning.duration, data.evening.time, data.evening.duration);
+                }
+            } catch (error) { 
+                console.error('Error loading schedules:', error);
+            }
         }
 
         // Update display
