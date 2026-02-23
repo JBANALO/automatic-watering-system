@@ -2220,59 +2220,45 @@
 
         // Handle Google Sign In
         async function handleGoogleSignIn() {
-            console.log('Google Sign In clicked');
             try {
                 if (typeof google !== 'undefined' && google.accounts) {
                     const clientId = '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com';
                     
-                    // Re-initialize with callback
+                    // Use the One Tap UI with fallback to popup
                     google.accounts.id.initialize({
                         client_id: clientId,
-                        callback: handleCredentialResponse,
-                        auto_select: false,
-                        itp_support: true
+                        callback: handleCredentialResponse
                     });
                     
-                    console.log('Google ID initialized for login');
-                    
-                    // Trigger the account selector popup
+                    // Trigger One Tap prompt
                     google.accounts.id.prompt((notification) => {
-                        console.log('Prompt result:', notification);
-                        
-                        if (notification.isNotDisplayed()) {
-                            console.log('Prompt not displayed, trying alternative method');
-                            // Use a zero-width hidden element to trigger the standard popup
-                            const div = document.createElement('div');
-                            div.style.position = 'absolute';
-                            div.style.width = '0';
-                            div.style.height = '0';
-                            document.body.appendChild(div);
+                        console.log('Prompt notification:', notification);
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                            // If One Tap didn't work, show the account picker
+                            console.log('Triggering account picker...');
+                            // Create a hidden element to trigger the native account picker
+                            google.accounts.id.renderButton(
+                                document.createElement('div'),
+                                { type: 'standard', size: 'large' }
+                            );
                             
-                            google.accounts.id.renderButton(div, {
-                                type: 'standard',
-                                size: 'large',
-                                theme: 'outline',
-                                text: 'signin_with',
-                                click_listener: () => {
-                                    console.log('Google button clicked via render');
-                                }
-                            });
+                            // Actually, use the standard popup
+                            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                                `client_id=${clientId}` +
+                                `&redirect_uri=${encodeURIComponent(window.location.href)}` +
+                                `&response_type=id_token` +
+                                `&scope=openid email profile` +
+                                `&nonce=${generateNonce()}`;
                             
-                            // Find and click the rendered button
-                            const googleButton = div.querySelector('div[role="button"]');
-                            if (googleButton) {
-                                googleButton.click();
+                            // For now, open popup
+                            const popup = window.open(authUrl, 'google_login', 'width=500,height=600');
+                            if (!popup) {
+                                showError('Unable to open Google login. Please allow popups.');
                             }
-                            
-                            // Clean up after a delay
-                            setTimeout(() => {
-                                document.body.removeChild(div);
-                            }, 5000);
                         }
                     });
                 } else {
                     showError('Google Sign-In library not loaded. Please refresh the page.');
-                    console.error('Google Sign-In library not available');
                 }
             } catch (error) {
                 console.error('Google Sign-In error:', error);
