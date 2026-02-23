@@ -1,7 +1,6 @@
 <?php
 session_start();
 require_once '../db_config.php';
-require_once 'GmailSMTP.php';
 
 // Gmail Configuration
 define('GMAIL_USER', 'asniasrp@gmail.com');
@@ -21,8 +20,6 @@ if ($method === 'POST') {
         verifyEmail($input, $conn);
     } elseif ($action === 'forgot-password') {
         sendPasswordResetEmail($input, $conn);
-    } elseif ($action === 'reset-password') {
-        resetPassword($input, $conn);
     }
 } elseif ($method === 'GET' && $action === 'logout') {
     session_destroy();
@@ -39,18 +36,83 @@ function generateVerificationCode() {
 }
 
 function sendEmailViaSMTP($to, $subject, $htmlContent) {
+    // Gmail SMTP configuration
+    $gmailUser = GMAIL_USER;
+    $gmailPassword = GMAIL_PASSWORD;
+    
     try {
-        $smtp = new GmailSMTP(GMAIL_USER, GMAIL_PASSWORD);
-        $result = $smtp->send($to, $subject, $htmlContent);
+        // Create stream context with SSL
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ]
+        ]);
         
-        if ($result) {
-            return true;
-        } else {
-            error_log("Failed to send email to: $to");
+        // Connect to Gmail SMTP
+        $connection = fsockopen('tls://smtp.gmail.com', 587, $errno, $errstr, 10);
+        
+        if (!$connection) {
+            error_log("SMTP Connection failed: $errstr");
             return false;
         }
+        
+        $response = fgets($connection);
+        
+        // Send EHLO
+        fwrite($connection, "EHLO localhost\r\n");
+        fgets($connection);
+        
+        // Start TLS
+        fwrite($connection, "STARTTLS\r\n");
+        fgets($connection);
+        
+        // Enable TLS
+        stream_socket_enable_crypto($connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+        
+        // Re-send EHLO after TLS
+        fwrite($connection, "EHLO localhost\r\n");
+        fgets($connection);
+        
+        // Authenticate
+        fwrite($connection, "AUTH LOGIN\r\n");
+        fgets($connection);
+        
+        fwrite($connection, base64_encode($gmailUser) . "\r\n");
+        fgets($connection);
+        
+        fwrite($connection, base64_encode($gmailPassword) . "\r\n");
+        fgets($connection);
+        
+        // Send email
+        fwrite($connection, "MAIL FROM:<" . $gmailUser . ">\r\n");
+        fgets($connection);
+        
+        fwrite($connection, "RCPT TO:<" . $to . ">\r\n");
+        fgets($connection);
+        
+        fwrite($connection, "DATA\r\n");
+        fgets($connection);
+        
+        // Create email headers and body
+        $headers = "From: " . $gmailUser . "\r\n";
+        $headers .= "To: " . $to . "\r\n";
+        $headers .= "Subject: " . $subject . "\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "\r\n";
+        
+        fwrite($connection, $headers . $htmlContent . "\r\n.\r\n");
+        fgets($connection);
+        
+        // Quit
+        fwrite($connection, "QUIT\r\n");
+        fclose($connection);
+        
+        return true;
     } catch (Exception $e) {
-        error_log("Email exception: " . $e->getMessage());
+        error_log("Email sending failed: " . $e->getMessage());
         return false;
     }
 }
@@ -74,7 +136,7 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>
@@ -93,6 +155,32 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
     ";
     
     return sendEmailViaSMTP($email, $subject, $htmlContent);
+}
+            
+            <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
+            </p>
+            
+            <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>
+                If you didn't create this account, please ignore this email or contact our support team.
+            </p>
+            
+            <hr style='border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;'>
+            
+            <p style='font-size: 12px; color: #999; text-align: center;'>
+                Smart Irrigation System<br>
+                Automated Garden Control
+            </p>
+        </div>
+    </body>
+    </html>
+    ";
+    
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: noreply@smartirrigation.local\r\n";
+    
+    return mail($to, $subject, $htmlContent, $headers);
 }
 
 function registerUser($input, $conn) {
@@ -126,7 +214,7 @@ function registerUser($input, $conn) {
     $hashed = password_hash($password, PASSWORD_BCRYPT);
     $verificationCode = generateVerificationCode();
     $verificationCodeHash = password_hash($verificationCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     $sql = "INSERT INTO users (username, first_name, last_name, email, password, verification_code, verification_code_expires, email_verified) 
             VALUES ('$username', '$firstName', '$lastName', '$email', '$hashed', '$verificationCodeHash', '$expiresAt', 0)";
@@ -140,20 +228,18 @@ function registerUser($input, $conn) {
         if ($emailSent) {
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Check your email for the 6-digit verification code. Code expires in 5 minutes.',
+                'message' => 'Registration successful! Verification code sent to your email.',
                 'user_id' => $user_id,
-                'requires_verification' => true,
-                'expires_at' => $expiresAt
+                'requires_verification' => true
             ]);
         } else {
-            // Email failed but registration succeeded - show test code for development
+            // Email failed but user created - still ask for verification
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Email service not available. Test code: ' . $verificationCode,
+                'message' => 'Registration successful! If you don\'t see the email, check your spam folder.',
                 'user_id' => $user_id,
                 'requires_verification' => true,
-                'test_code' => $verificationCode,
-                'email_send_note' => 'For production, ensure Gmail credentials are correct'
+                'email_send_note' => 'Email service may need configuration'
             ]);
         }
     } else {
@@ -269,127 +355,5 @@ function getUserInfo($conn) {
     $user = $result->fetch_assoc();
     
     echo json_encode(['status' => 'success', 'user' => $user]);
-}
-
-function sendPasswordResetEmail($input, $conn) {
-    $email = $conn->real_escape_string($input['email'] ?? '');
-    
-    if (empty($email)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Email is required']);
-        return;
-    }
-    
-    // Check if user exists
-    $result = $conn->query("SELECT id, first_name FROM users WHERE email='$email'");
-    
-    if ($result->num_rows === 0) {
-        // Don't reveal if email exists (security best practice)
-        echo json_encode(['status' => 'success', 'message' => 'If this email exists, a reset link will be sent shortly']);
-        return;
-    }
-    
-    $user = $result->fetch_assoc();
-    $resetCode = generateVerificationCode();
-    $resetCodeHash = password_hash($resetCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
-    
-    // Store reset code
-    $conn->query("UPDATE users SET password_reset_code='$resetCodeHash', password_reset_expires='$expiresAt' WHERE id={$user['id']}");
-    
-    $subject = "Smart Irrigation System - Password Reset Code";
-    
-    $htmlContent = "
-    <html>
-    <body style='font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;'>
-        <div style='max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>
-            <h2 style='color: #667eea; margin-bottom: 20px;'>Password Reset Request</h2>
-            
-            <p style='font-size: 16px; color: #333; margin-bottom: 20px;'>
-                Hi {$user['first_name']},
-            </p>
-            
-            <p style='font-size: 16px; color: #333; margin-bottom: 20px;'>
-                We received a request to reset your password. Use the code below to reset your account password:
-            </p>
-            
-            <div style='background-color: #f0f0f0; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;'>
-                <p style='font-size: 12px; color: #999; margin: 0; margin-bottom: 10px;'>RESET CODE</p>
-                <h1 style='color: #667eea; font-size: 48px; letter-spacing: 10px; margin: 0; font-family: monospace;'>$resetCode</h1>
-            </div>
-            
-            <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
-            </p>
-            
-            <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>
-                If you didn't request a password reset, please ignore this email. Your account is secure.
-            </p>
-            
-            <hr style='border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;'>
-            
-            <p style='font-size: 12px; color: #999; text-align: center;'>
-                Smart Irrigation System<br>
-                Automated Garden Control
-            </p>
-        </div>
-    </body>
-    </html>
-    ";
-    
-    $emailSent = sendEmailViaSMTP($email, $subject, $htmlContent);
-    
-    if ($emailSent) {
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Password reset code sent to your email!'
-        ]);
-    } else {
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'If this email exists, a reset link will be sent shortly'
-        ]);
-    }
-}
-
-function resetPassword($input, $conn) {
-    $email = $conn->real_escape_string($input['email'] ?? '');
-    $code = $conn->real_escape_string($input['code'] ?? '');
-    $newPassword = $input['new_password'] ?? '';
-    
-    if (empty($email) || empty($code) || empty($newPassword)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'All fields are required']);
-        return;
-    }
-    
-    $result = $conn->query("SELECT id, password_reset_code, password_reset_expires FROM users WHERE email='$email'");
-    
-    if ($result->num_rows === 0) {
-        http_response_code(404);
-        echo json_encode(['status' => 'error', 'message' => 'User not found']);
-        return;
-    }
-    
-    $user = $result->fetch_assoc();
-    
-    if (strtotime($user['password_reset_expires']) < time()) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Password reset code has expired']);
-        return;
-    }
-    
-    if (password_verify($code, $user['password_reset_code'])) {
-        $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
-        $conn->query("UPDATE users SET password='$hashedPassword', password_reset_code=NULL, password_reset_expires=NULL WHERE id={$user['id']}");
-        
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Password reset successfully! You can now log in with your new password.'
-        ]);
-    } else {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid reset code']);
-    }
 }
 ?>

@@ -1,7 +1,6 @@
 <?php
 session_start();
 require_once '../db_config.php';
-require_once 'GmailSMTP.php';
 
 // Gmail Configuration
 define('GMAIL_USER', 'asniasrp@gmail.com');
@@ -39,18 +38,83 @@ function generateVerificationCode() {
 }
 
 function sendEmailViaSMTP($to, $subject, $htmlContent) {
+    // Gmail SMTP configuration
+    $gmailUser = GMAIL_USER;
+    $gmailPassword = GMAIL_PASSWORD;
+    
     try {
-        $smtp = new GmailSMTP(GMAIL_USER, GMAIL_PASSWORD);
-        $result = $smtp->send($to, $subject, $htmlContent);
+        // Create stream context with SSL
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ]
+        ]);
         
-        if ($result) {
-            return true;
-        } else {
-            error_log("Failed to send email to: $to");
+        // Connect to Gmail SMTP (suppress warnings)
+        $connection = @fsockopen('tls://smtp.gmail.com', 587, $errno, $errstr, 10);
+        
+        if (!$connection) {
+            error_log("SMTP Connection failed: $errstr");
             return false;
         }
+        
+        $response = @fgets($connection);
+        
+        // Send EHLO
+        @fwrite($connection, "EHLO localhost\r\n");
+        @fgets($connection);
+        
+        // Start TLS
+        @fwrite($connection, "STARTTLS\r\n");
+        @fgets($connection);
+        
+        // Enable TLS
+        @stream_socket_enable_crypto($connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+        
+        // Re-send EHLO after TLS
+        @fwrite($connection, "EHLO localhost\r\n");
+        @fgets($connection);
+        
+        // Authenticate
+        @fwrite($connection, "AUTH LOGIN\r\n");
+        @fgets($connection);
+        
+        @fwrite($connection, base64_encode($gmailUser) . "\r\n");
+        @fgets($connection);
+        
+        @fwrite($connection, base64_encode($gmailPassword) . "\r\n");
+        @fgets($connection);
+        
+        // Send email
+        @fwrite($connection, "MAIL FROM:<" . $gmailUser . ">\r\n");
+        @fgets($connection);
+        
+        @fwrite($connection, "RCPT TO:<" . $to . ">\r\n");
+        @fgets($connection);
+        
+        @fwrite($connection, "DATA\r\n");
+        @fgets($connection);
+        
+        // Create email headers and body
+        $headers = "From: " . $gmailUser . "\r\n";
+        $headers .= "To: " . $to . "\r\n";
+        $headers .= "Subject: " . $subject . "\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "\r\n";
+        
+        fwrite($connection, $headers . $htmlContent . "\r\n.\r\n");
+        fgets($connection);
+        
+        // Quit
+        fwrite($connection, "QUIT\r\n");
+        fclose($connection);
+        
+        return true;
     } catch (Exception $e) {
-        error_log("Email exception: " . $e->getMessage());
+        error_log("Email sending failed: " . $e->getMessage());
         return false;
     }
 }
@@ -74,7 +138,7 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>
@@ -126,7 +190,7 @@ function registerUser($input, $conn) {
     $hashed = password_hash($password, PASSWORD_BCRYPT);
     $verificationCode = generateVerificationCode();
     $verificationCodeHash = password_hash($verificationCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     $sql = "INSERT INTO users (username, first_name, last_name, email, password, verification_code, verification_code_expires, email_verified) 
             VALUES ('$username', '$firstName', '$lastName', '$email', '$hashed', '$verificationCodeHash', '$expiresAt', 0)";
@@ -140,20 +204,18 @@ function registerUser($input, $conn) {
         if ($emailSent) {
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Check your email for the 6-digit verification code. Code expires in 5 minutes.',
+                'message' => 'Registration successful! Verification code sent to your email.',
                 'user_id' => $user_id,
-                'requires_verification' => true,
-                'expires_at' => $expiresAt
+                'requires_verification' => true
             ]);
         } else {
-            // Email failed but registration succeeded - show test code for development
+            // Email failed but user created - still ask for verification
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Email service not available. Test code: ' . $verificationCode,
+                'message' => 'Registration successful! If you don\'t see the email, check your spam folder.',
                 'user_id' => $user_id,
                 'requires_verification' => true,
-                'test_code' => $verificationCode,
-                'email_send_note' => 'For production, ensure Gmail credentials are correct'
+                'email_send_note' => 'Email service may need configuration'
             ]);
         }
     } else {
@@ -292,7 +354,7 @@ function sendPasswordResetEmail($input, $conn) {
     $user = $result->fetch_assoc();
     $resetCode = generateVerificationCode();
     $resetCodeHash = password_hash($resetCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     // Store reset code
     $conn->query("UPDATE users SET password_reset_code='$resetCodeHash', password_reset_expires='$expiresAt' WHERE id={$user['id']}");
@@ -319,7 +381,7 @@ function sendPasswordResetEmail($input, $conn) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>

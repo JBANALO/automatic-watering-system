@@ -74,7 +74,7 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>
@@ -126,7 +126,7 @@ function registerUser($input, $conn) {
     $hashed = password_hash($password, PASSWORD_BCRYPT);
     $verificationCode = generateVerificationCode();
     $verificationCodeHash = password_hash($verificationCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     $sql = "INSERT INTO users (username, first_name, last_name, email, password, verification_code, verification_code_expires, email_verified) 
             VALUES ('$username', '$firstName', '$lastName', '$email', '$hashed', '$verificationCodeHash', '$expiresAt', 0)";
@@ -140,20 +140,19 @@ function registerUser($input, $conn) {
         if ($emailSent) {
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Check your email for the 6-digit verification code. Code expires in 5 minutes.',
+                'message' => 'Registration successful! Verification code sent to your email.',
                 'user_id' => $user_id,
-                'requires_verification' => true,
-                'expires_at' => $expiresAt
+                'requires_verification' => true
             ]);
         } else {
-            // Email failed but registration succeeded - show test code for development
+            // Email failed - for development/testing, show the code
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Email service not available. Test code: ' . $verificationCode,
+                'message' => 'Registration successful! Email service not configured. Use code for testing: ' . $verificationCode,
                 'user_id' => $user_id,
                 'requires_verification' => true,
                 'test_code' => $verificationCode,
-                'email_send_note' => 'For production, ensure Gmail credentials are correct'
+                'email_send_note' => 'Email service needs Gmail SMTP configuration'
             ]);
         }
     } else {
@@ -292,7 +291,7 @@ function sendPasswordResetEmail($input, $conn) {
     $user = $result->fetch_assoc();
     $resetCode = generateVerificationCode();
     $resetCodeHash = password_hash($resetCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     // Store reset code
     $conn->query("UPDATE users SET password_reset_code='$resetCodeHash', password_reset_expires='$expiresAt' WHERE id={$user['id']}");
@@ -319,7 +318,7 @@ function sendPasswordResetEmail($input, $conn) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>

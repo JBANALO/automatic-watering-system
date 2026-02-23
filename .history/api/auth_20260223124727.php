@@ -74,7 +74,7 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>
@@ -140,7 +140,7 @@ function registerUser($input, $conn) {
         if ($emailSent) {
             echo json_encode([
                 'status' => 'success', 
-                'message' => 'Registration successful! Check your email for the 6-digit verification code. Code expires in 5 minutes.',
+                'message' => 'Registration successful! Check your email for the 6-digit verification code. Code expires in 30 minutes.',
                 'user_id' => $user_id,
                 'requires_verification' => true,
                 'expires_at' => $expiresAt
@@ -292,7 +292,7 @@ function sendPasswordResetEmail($input, $conn) {
     $user = $result->fetch_assoc();
     $resetCode = generateVerificationCode();
     $resetCodeHash = password_hash($resetCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     // Store reset code
     $conn->query("UPDATE users SET password_reset_code='$resetCodeHash', password_reset_expires='$expiresAt' WHERE id={$user['id']}");
@@ -319,7 +319,7 @@ function sendPasswordResetEmail($input, $conn) {
             </div>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 10px;'>
-                <strong>⏱️ This code will expire in 5 minutes</strong>
+                <strong>⏱️ This code will expire in 30 minutes</strong>
             </p>
             
             <p style='font-size: 14px; color: #666; margin-bottom: 20px;'>

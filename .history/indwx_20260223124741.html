@@ -2121,13 +2121,13 @@
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationErrorMessage').style.display = 'none';
                     
-                    // Start countdown (5 minutes from now for login flow)
+                    // Start countdown (30 minutes from now for login flow)
                     if (data.expires_at) {
                         startVerificationCountdown(data.expires_at);
                     } else {
                         // Fallback: estimate based on current time
                         const expiresAt = new Date();
-                        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+                        expiresAt.setMinutes(expiresAt.getMinutes() + 30);
                         startVerificationCountdown(expiresAt.toISOString());
                     }
                     
@@ -2494,9 +2494,9 @@
                 successMsg.textContent = '✅ Verification code resent to your email';
                 successMsg.style.display = 'block';
                 
-                // Reset the countdown with 5 minutes
+                // Reset the countdown with 30 minutes
                 const expiresAt = new Date();
-                expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+                expiresAt.setMinutes(expiresAt.getMinutes() + 30);
                 startVerificationCountdown(expiresAt.toISOString());
                 
                 setTimeout(() => {

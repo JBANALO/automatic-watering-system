@@ -2120,17 +2120,6 @@
                     document.getElementById('emailVerificationForm').style.display = 'block';
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationErrorMessage').style.display = 'none';
-                    
-                    // Start countdown (5 minutes from now for login flow)
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    } else {
-                        // Fallback: estimate based on current time
-                        const expiresAt = new Date();
-                        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                        startVerificationCountdown(expiresAt.toISOString());
-                    }
-                    
                     showError(data.message);
                 } else {
                     showError(data.message);
@@ -2171,11 +2160,6 @@
                     document.getElementById('verificationErrorMessage').style.display = 'none';
                     document.getElementById('verificationSuccessMessage').style.display = 'none';
                     document.getElementById('verificationCode').value = '';
-                    
-                    // Start countdown with expiration time from server
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    }
                     
                     showError(data.message);
                 } else {
@@ -2424,10 +2408,10 @@
             
             if (diff <= 0) {
                 clearInterval(verificationCountdownInterval);
-                document.getElementById('verificationCountdown').innerHTML = '⏰ Code expired! Please <a onclick="resendVerificationCode()" style="color: #667eea; font-weight: 700; text-decoration: underline; cursor: pointer;">request a new code</a>';
-                document.getElementById('verificationCountdown').style.background = '#fff3cd';
-                document.getElementById('verificationCountdown').style.borderLeftColor = '#ffc107';
-                document.getElementById('verificationCountdown').style.color = '#856404';
+                document.getElementById('verificationCountdown').innerHTML = '⏰ Code expired! Please <a onclick="resendVerificationCode()" style="color: #d32f2f; font-weight: 700; text-decoration: underline; cursor: pointer;">request a new code</a>';
+                document.getElementById('verificationCountdown').style.background = '#ffebee';
+                document.getElementById('verificationCountdown').style.borderLeftColor = '#d32f2f';
+                document.getElementById('verificationCountdown').style.color = '#d32f2f';
                 return;
             }
             
@@ -2493,11 +2477,6 @@
                 // For now, show a message
                 successMsg.textContent = '✅ Verification code resent to your email';
                 successMsg.style.display = 'block';
-                
-                // Reset the countdown with 5 minutes
-                const expiresAt = new Date();
-                expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                startVerificationCountdown(expiresAt.toISOString());
                 
                 setTimeout(() => {
                     successMsg.style.display = 'none';

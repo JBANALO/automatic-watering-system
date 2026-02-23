@@ -102,26 +102,22 @@ while ($conn->next_result()) {
 }
 
 // Add missing columns to users table if they don't exist
-// Check which columns exist first
-$result = $conn->query("DESCRIBE users");
-$existingColumns = [];
-while ($row = $result->fetch_assoc()) {
-    $existingColumns[] = $row['Field'];
-}
-
-$columnsToAdd = [
-    'first_name' => "ALTER TABLE users ADD COLUMN first_name VARCHAR(100)",
-    'last_name' => "ALTER TABLE users ADD COLUMN last_name VARCHAR(100)",
-    'email_verified' => "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0",
-    'verification_code' => "ALTER TABLE users ADD COLUMN verification_code VARCHAR(255)",
-    'verification_code_expires' => "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME",
-    'password_reset_code' => "ALTER TABLE users ADD COLUMN password_reset_code VARCHAR(255)",
-    'password_reset_expires' => "ALTER TABLE users ADD COLUMN password_reset_expires DATETIME"
+// Use try-catch to handle columns that might already exist
+$alterStatements = [
+    "ALTER TABLE users ADD COLUMN first_name VARCHAR(100)",
+    "ALTER TABLE users ADD COLUMN last_name VARCHAR(100)",
+    "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN verification_code VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME",
+    "ALTER TABLE users ADD COLUMN password_reset_code VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN password_reset_expires DATETIME"
 ];
 
-foreach ($columnsToAdd as $columnName => $alterSQL) {
-    if (!in_array($columnName, $existingColumns)) {
-        $conn->query($alterSQL);
+foreach ($alterStatements as $alter) {
+    try {
+        $conn->query($alter);
+    } catch (Exception $e) {
+        // Column already exists or other error - silently ignore
     }
 }
 

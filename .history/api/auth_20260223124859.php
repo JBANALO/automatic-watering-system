@@ -292,7 +292,7 @@ function sendPasswordResetEmail($input, $conn) {
     $user = $result->fetch_assoc();
     $resetCode = generateVerificationCode();
     $resetCodeHash = password_hash($resetCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
     
     // Store reset code
     $conn->query("UPDATE users SET password_reset_code='$resetCodeHash', password_reset_expires='$expiresAt' WHERE id={$user['id']}");

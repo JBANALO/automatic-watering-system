@@ -1700,8 +1700,6 @@
                 <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">✉️ Verify Your Email</h2>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">We've sent a 6-digit code to your email address. Enter it below to complete registration.</p>
                 
-                <div id="verificationCountdown" style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; text-align: center; color: #667eea; font-weight: 600; font-size: 0.95em;"></div>
-                
                 <div id="verificationErrorMessage" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
                 <div id="verificationSuccessMessage" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
                 
@@ -1749,22 +1747,8 @@
         </div>
     </div>
 
-    <!-- Dashboard Section -->
-    <div id="dashboard">
-        <!-- Header -->
-        <div class="dashboard-header" style="background: white; padding: 20px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 0; width: 100%;">
-            <div style="flex: 1; min-width: 0; overflow: hidden;">
-                <h1 style="margin: 0; font-size: 2em;">💧 Smart Irrigation System</h1>
-                <p class="subtitle" style="margin: 5px 0 0 0;">Web Management Dashboard</p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0; position: relative;">
-                <div style="position: relative;">
-                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()" title="User Profile">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="8" r="4"></circle>
-                            <path d="M 12 14 C 7 14 3 17 3 21 L 21 21 C 21 17 17 14 12 14 Z"></path>
-                        </svg>
-                    </button>
+            <!-- Password Reset Code Form -->
+            <input type="hidden" id="currentUserIdForVerification">
                     <div class="user-dropdown" id="userDropdown">
                         <button class="user-dropdown-item" id="userNameDisplay">👤 User</button>
                         <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()">🚪 Logout</button>
@@ -1973,10 +1957,6 @@
 
     <script>
         const API_BASE = 'api/';
-        
-        // Variable to track verification code expiration
-        let verificationExpiresAt = null;
-        let verificationCountdownInterval = null;
         let currentUser = null;
         let systemRunning = false;
         let autoMode = true;
@@ -2120,17 +2100,6 @@
                     document.getElementById('emailVerificationForm').style.display = 'block';
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationErrorMessage').style.display = 'none';
-                    
-                    // Start countdown (5 minutes from now for login flow)
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    } else {
-                        // Fallback: estimate based on current time
-                        const expiresAt = new Date();
-                        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                        startVerificationCountdown(expiresAt.toISOString());
-                    }
-                    
                     showError(data.message);
                 } else {
                     showError(data.message);
@@ -2171,11 +2140,6 @@
                     document.getElementById('verificationErrorMessage').style.display = 'none';
                     document.getElementById('verificationSuccessMessage').style.display = 'none';
                     document.getElementById('verificationCode').value = '';
-                    
-                    // Start countdown with expiration time from server
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    }
                     
                     showError(data.message);
                 } else {
@@ -2400,43 +2364,6 @@
             }
         }
 
-        // Start countdown timer for verification code
-        function startVerificationCountdown(expiresAtStr) {
-            verificationExpiresAt = new Date(expiresAtStr);
-            
-            // Clear any existing countdown
-            if (verificationCountdownInterval) {
-                clearInterval(verificationCountdownInterval);
-            }
-            
-            // Update immediately
-            updateVerificationCountdown();
-            
-            // Update every second
-            verificationCountdownInterval = setInterval(updateVerificationCountdown, 1000);
-        }
-        
-        function updateVerificationCountdown() {
-            if (!verificationExpiresAt) return;
-            
-            const now = new Date();
-            const diff = verificationExpiresAt - now;
-            
-            if (diff <= 0) {
-                clearInterval(verificationCountdownInterval);
-                document.getElementById('verificationCountdown').innerHTML = '⏰ Code expired! Please <a onclick="resendVerificationCode()" style="color: #667eea; font-weight: 700; text-decoration: underline; cursor: pointer;">request a new code</a>';
-                document.getElementById('verificationCountdown').style.background = '#fff3cd';
-                document.getElementById('verificationCountdown').style.borderLeftColor = '#ffc107';
-                document.getElementById('verificationCountdown').style.color = '#856404';
-                return;
-            }
-            
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            
-            document.getElementById('verificationCountdown').innerHTML = `⏱️ Code expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
         // Handle email verification code submission
         async function submitVerificationCode() {
             const userId = document.getElementById('currentUserIdForVerification').value;
@@ -2493,11 +2420,6 @@
                 // For now, show a message
                 successMsg.textContent = '✅ Verification code resent to your email';
                 successMsg.style.display = 'block';
-                
-                // Reset the countdown with 5 minutes
-                const expiresAt = new Date();
-                expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                startVerificationCountdown(expiresAt.toISOString());
                 
                 setTimeout(() => {
                     successMsg.style.display = 'none';

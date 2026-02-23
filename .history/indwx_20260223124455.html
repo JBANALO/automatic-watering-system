@@ -2120,17 +2120,6 @@
                     document.getElementById('emailVerificationForm').style.display = 'block';
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationErrorMessage').style.display = 'none';
-                    
-                    // Start countdown (5 minutes from now for login flow)
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    } else {
-                        // Fallback: estimate based on current time
-                        const expiresAt = new Date();
-                        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                        startVerificationCountdown(expiresAt.toISOString());
-                    }
-                    
                     showError(data.message);
                 } else {
                     showError(data.message);
@@ -2171,11 +2160,6 @@
                     document.getElementById('verificationErrorMessage').style.display = 'none';
                     document.getElementById('verificationSuccessMessage').style.display = 'none';
                     document.getElementById('verificationCode').value = '';
-                    
-                    // Start countdown with expiration time from server
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    }
                     
                     showError(data.message);
                 } else {
@@ -2400,43 +2384,6 @@
             }
         }
 
-        // Start countdown timer for verification code
-        function startVerificationCountdown(expiresAtStr) {
-            verificationExpiresAt = new Date(expiresAtStr);
-            
-            // Clear any existing countdown
-            if (verificationCountdownInterval) {
-                clearInterval(verificationCountdownInterval);
-            }
-            
-            // Update immediately
-            updateVerificationCountdown();
-            
-            // Update every second
-            verificationCountdownInterval = setInterval(updateVerificationCountdown, 1000);
-        }
-        
-        function updateVerificationCountdown() {
-            if (!verificationExpiresAt) return;
-            
-            const now = new Date();
-            const diff = verificationExpiresAt - now;
-            
-            if (diff <= 0) {
-                clearInterval(verificationCountdownInterval);
-                document.getElementById('verificationCountdown').innerHTML = '⏰ Code expired! Please <a onclick="resendVerificationCode()" style="color: #667eea; font-weight: 700; text-decoration: underline; cursor: pointer;">request a new code</a>';
-                document.getElementById('verificationCountdown').style.background = '#fff3cd';
-                document.getElementById('verificationCountdown').style.borderLeftColor = '#ffc107';
-                document.getElementById('verificationCountdown').style.color = '#856404';
-                return;
-            }
-            
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            
-            document.getElementById('verificationCountdown').innerHTML = `⏱️ Code expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
         // Handle email verification code submission
         async function submitVerificationCode() {
             const userId = document.getElementById('currentUserIdForVerification').value;
@@ -2493,11 +2440,6 @@
                 // For now, show a message
                 successMsg.textContent = '✅ Verification code resent to your email';
                 successMsg.style.display = 'block';
-                
-                // Reset the countdown with 5 minutes
-                const expiresAt = new Date();
-                expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                startVerificationCountdown(expiresAt.toISOString());
                 
                 setTimeout(() => {
                     successMsg.style.display = 'none';

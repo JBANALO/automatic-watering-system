@@ -83,24 +83,6 @@
             border-color: #667eea;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .form-row .form-group {
-            margin-bottom: 0;
-        }
-
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-        }
-
         .btn-login {
             width: 100%;
             padding: 12px;
@@ -959,17 +941,23 @@
                 margin-bottom: 10px;
             }
 
-            .signup-link {
+            .signup-buttons {
+                gap: 8px;
+            }
+
+            .btn-signup-link {
+                padding: 9px 10px;
                 font-size: 0.9em;
             }
 
-            .or-divider {
-                text-align: center;
-                color: #999;
-                font-size: 0.85em;
-                font-weight: 600;
-                margin: 15px 0 10px 0;
-                letter-spacing: 1px;
+            .google-signin-btn {
+                padding: 9px 10px;
+                font-size: 0.9em;
+            }
+
+            .signup-divider {
+                font-size: 0.8em;
+                margin: 6px 0;
             }
 
             .form-group {
@@ -1251,25 +1239,6 @@
                 margin-bottom: 10px;
             }
 
-            .signup-options {
-                margin-top: 12px;
-                padding-top: 12px;
-            }
-
-            .signup-text {
-                font-size: 0.85em;
-                margin-bottom: 8px;
-            }
-
-            .signup-link {
-                font-size: 0.85em;
-            }
-
-            .or-divider {
-                font-size: 0.8em;
-                margin: 12px 0 8px 0;
-            }
-
             .control-btn {
                 padding: 9px;
                 font-size: 0.85em;
@@ -1419,11 +1388,6 @@
                 font-size: 0.85em;
             }
 
-            .or-divider {
-                font-size: 0.75em;
-                margin: 10px 0 7px 0;
-            }
-
             .control-btn {
                 padding: 8px;
                 font-size: 0.8em;
@@ -1556,19 +1520,6 @@
             margin-bottom: 12px;
         }
 
-        .signup-link {
-            color: #667eea;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .signup-link:hover {
-            color: #5568d3;
-            text-decoration: underline;
-        }
-
         .signup-buttons {
             display: flex;
             gap: 8px;
@@ -1592,6 +1543,13 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
+
+        .signup-divider {
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -1600,7 +1558,6 @@
         <div class="auth-card">
             <h1>💧 Irrigation</h1>
             <p class="subtitle">Smart Garden Control</p>
-            <input type="hidden" id="currentUserIdForVerification">
             <div id="errorMessage" class="error-message"></div>
             
             <!-- Login Form -->
@@ -1619,19 +1576,20 @@
                 </div>
 
                 <div class="signup-options">
-                    <p class="signup-text">Don't have an account? <a class="signup-link" onclick="toggleForm()">Sign up here</a></p>
-                    
-                    <div class="or-divider">OR</div>
-                    
-                    <button class="google-signin-btn" onclick="handleGoogleSignUp()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                    </button>
+                    <div class="signup-text">Don't have an account?</div>
+                    <div class="signup-buttons">
+                        <button class="btn-signup-link" onclick="toggleForm()">Sign Up Here</button>
+                        <div class="signup-divider">or continue with</div>
+                        <button class="google-signin-btn" onclick="handleGoogleSignUp()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Google
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -1640,16 +1598,6 @@
                 <div class="form-group">
                     <label for="regUsername">Username</label>
                     <input type="text" id="regUsername" placeholder="Choose username">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="regFirstName">First Name</label>
-                        <input type="text" id="regFirstName" placeholder="First name">
-                    </div>
-                    <div class="form-group">
-                        <label for="regLastName">Last Name</label>
-                        <input type="text" id="regLastName" placeholder="Last name">
-                    </div>
                 </div>
                 <div class="form-group">
                     <label for="regEmail">Email</label>
@@ -1662,19 +1610,20 @@
                 <button class="btn-login" onclick="handleRegister()">Create Account</button>
 
                 <div class="signup-options">
-                    <p class="signup-text">Already have an account? <a class="signup-link" onclick="toggleForm()">Sign in here</a></p>
-                    
-                    <div class="or-divider">OR</div>
-                    
-                    <button class="google-signin-btn" onclick="handleGoogleSignIn()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                    </button>
+                    <div class="signup-text">Already have an account?</div>
+                    <div class="signup-buttons">
+                        <button class="btn-signup-link" onclick="toggleForm()">Sign In Here</button>
+                        <div class="signup-divider">or continue with</div>
+                        <button class="google-signin-btn" onclick="handleGoogleSignIn()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Google
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1692,58 +1641,6 @@
                 </div>
                 
                 <button class="btn-login" style="background: #667eea;" onclick="sendPasswordReset()">Send Reset Link</button>
-                <button class="btn-back-to-login" onclick="toggleForgotPasswordForm()">Back to Sign In</button>
-            </div>
-
-            <!-- Email Verification Form -->
-            <div id="emailVerificationForm" style="display: none;">
-                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">✉️ Verify Your Email</h2>
-                <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">We've sent a 6-digit code to your email address. Enter it below to complete registration.</p>
-                
-                <div id="verificationCountdown" style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; text-align: center; color: #667eea; font-weight: 600; font-size: 0.95em;"></div>
-                
-                <div id="verificationErrorMessage" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
-                <div id="verificationSuccessMessage" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
-                
-                <div class="form-group">
-                    <label for="verificationCode">Verification Code</label>
-                    <input type="text" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric">
-                </div>
-                
-                <button class="btn-login" style="background: #667eea;" onclick="submitVerificationCode()">Verify Email</button>
-                
-                <p style="color: #666; font-size: 0.85em; margin-top: 15px; text-align: center;">
-                    Didn't receive the code? <a onclick="resendVerificationCode()" style="color: #667eea; cursor: pointer; font-weight: 600; text-decoration: underline;">Resend code</a>
-                </p>
-            </div>
-
-            <!-- Password Reset Code Form -->
-            <div id="passwordResetCodeForm" style="display: none;">
-                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">🔑 Reset Your Password</h2>
-                <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter the 6-digit code we sent to your email and create a new password.</p>
-                
-                <input type="hidden" id="resetEmailForPasswordChange">
-                
-                <div id="resetCodeErrorMessage" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
-                <div id="resetCodeSuccessMessage" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
-                
-                <div class="form-group">
-                    <label for="resetCode">Reset Code</label>
-                    <input type="text" id="resetCode" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric">
-                </div>
-                
-                <div class="form-group">
-                    <label for="resetNewPassword">New Password</label>
-                    <input type="password" id="resetNewPassword" placeholder="Enter new password">
-                </div>
-                
-                <div class="form-group">
-                    <label for="resetConfirmPassword">Confirm Password</label>
-                    <input type="password" id="resetConfirmPassword" placeholder="Confirm new password">
-                </div>
-                
-                <button class="btn-login" style="background: #667eea;" onclick="submitPasswordResetCode()">Reset Password</button>
-                
                 <button class="btn-back-to-login" onclick="toggleForgotPasswordForm()">Back to Sign In</button>
             </div>
         </div>
@@ -1973,10 +1870,6 @@
 
     <script>
         const API_BASE = 'api/';
-        
-        // Variable to track verification code expiration
-        let verificationExpiresAt = null;
-        let verificationCountdownInterval = null;
         let currentUser = null;
         let systemRunning = false;
         let autoMode = true;
@@ -2082,15 +1975,6 @@
             document.getElementById('registerForm').style.display = 
                 document.getElementById('registerForm').style.display === 'none' ? 'block' : 'none';
             document.getElementById('errorMessage').style.display = 'none';
-            
-            // Clear form fields
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('regUsername').value = '';
-            document.getElementById('regFirstName').value = '';
-            document.getElementById('regLastName').value = '';
-            document.getElementById('regEmail').value = '';
-            document.getElementById('regPassword').value = '';
         }
 
         // Handle login
@@ -2113,25 +1997,6 @@
                 const data = await response.json();
                 if (data.status === 'success') {
                     await loadDashboard();
-                } else if (data.requires_verification) {
-                    // User hasn't verified email yet
-                    document.getElementById('currentUserIdForVerification').value = data.user_id;
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('emailVerificationForm').style.display = 'block';
-                    document.getElementById('verificationCode').value = '';
-                    document.getElementById('verificationErrorMessage').style.display = 'none';
-                    
-                    // Start countdown (5 minutes from now for login flow)
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    } else {
-                        // Fallback: estimate based on current time
-                        const expiresAt = new Date();
-                        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                        startVerificationCountdown(expiresAt.toISOString());
-                    }
-                    
-                    showError(data.message);
                 } else {
                     showError(data.message);
                 }
@@ -2143,12 +2008,10 @@
         // Handle registration
         async function handleRegister() {
             const username = document.getElementById('regUsername').value;
-            const firstName = document.getElementById('regFirstName').value;
-            const lastName = document.getElementById('regLastName').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
 
-            if (!username || !firstName || !lastName || !email || !password) {
+            if (!username || !email || !password) {
                 showError('Please fill all fields');
                 return;
             }
@@ -2157,27 +2020,13 @@
                 const response = await fetch(API_BASE + 'auth.php?action=register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, firstName, lastName, email, password })
+                    body: JSON.stringify({ username, email, password })
                 });
 
                 const data = await response.json();
                 if (data.status === 'success') {
-                    // Store user ID for verification
-                    document.getElementById('currentUserIdForVerification').value = data.user_id;
-                    
-                    // Hide registration form and show verification form
-                    document.getElementById('registerForm').style.display = 'none';
-                    document.getElementById('emailVerificationForm').style.display = 'block';
-                    document.getElementById('verificationErrorMessage').style.display = 'none';
-                    document.getElementById('verificationSuccessMessage').style.display = 'none';
-                    document.getElementById('verificationCode').value = '';
-                    
-                    // Start countdown with expiration time from server
-                    if (data.expires_at) {
-                        startVerificationCountdown(data.expires_at);
-                    }
-                    
-                    showError(data.message);
+                    showError('Registration successful! Please login.');
+                    setTimeout(() => toggleForm(), 2000);
                 } else {
                     showError(data.message);
                 }
@@ -2289,7 +2138,7 @@
         }
 
         // Send password reset link
-        async function sendPasswordReset() {
+        function sendPasswordReset() {
             const email = document.getElementById('resetEmail').value;
             const successMsg = document.getElementById('resetSuccessMessage');
             const errorMsg = document.getElementById('resetErrorMessage');
@@ -2310,202 +2159,22 @@
                 return;
             }
 
-            try {
-                const response = await fetch(API_BASE + 'auth.php?action=forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
-
-                const data = await response.json();
-                
-                successMsg.textContent = '✅ ' + data.message;
-                successMsg.style.display = 'block';
-                
-                // Store email for password reset
-                document.getElementById('resetEmailForPasswordChange').value = email;
-                
-                // Clear the input
-                document.getElementById('resetEmail').value = '';
-
-                // Show password reset code form after 2 seconds
-                setTimeout(() => {
-                    document.getElementById('forgotPasswordForm').style.display = 'none';
-                    document.getElementById('passwordResetCodeForm').style.display = 'block';
-                    document.getElementById('resetCode').focus();
-                }, 2000);
-            } catch (error) {
-                errorMsg.textContent = '❌ Error: ' + error.message;
-                errorMsg.style.display = 'block';
-            }
-        }
-
-        // Handle password reset with code
-        async function submitPasswordResetCode() {
-            const email = document.getElementById('resetEmailForPasswordChange').value;
-            const code = document.getElementById('resetCode').value;
-            const newPassword = document.getElementById('resetNewPassword').value;
-            const confirmPassword = document.getElementById('resetConfirmPassword').value;
+            // Show success message
+            successMsg.textContent = '✅ Password reset link has been sent to ' + email;
+            successMsg.style.display = 'block';
             
-            const errorMsg = document.getElementById('resetCodeErrorMessage');
-            const successMsg = document.getElementById('resetCodeSuccessMessage');
+            // Clear the input
+            document.getElementById('resetEmail').value = '';
 
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
+            // Go back to login after 2 seconds
+            setTimeout(() => {
+                toggleForgotPasswordForm();
+            }, 2000);
 
-            if (!code || code.length !== 6) {
-                errorMsg.textContent = '❌ Please enter a valid 6-digit code';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            if (!newPassword || newPassword.length < 6) {
-                errorMsg.textContent = '❌ Password must be at least 6 characters';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                errorMsg.textContent = '❌ Passwords do not match';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            try {
-                const response = await fetch(API_BASE + 'auth.php?action=reset-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, code: code, new_password: newPassword })
-                });
-
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    successMsg.textContent = '✅ ' + data.message;
-                    successMsg.style.display = 'block';
-                    
-                    // Go back to login after 2 seconds
-                    setTimeout(() => {
-                        toggleForgotPasswordForm();
-                        document.getElementById('passwordResetCodeForm').style.display = 'none';
-                        document.getElementById('loginForm').style.display = 'block';
-                    }, 2000);
-                } else {
-                    errorMsg.textContent = '❌ ' + data.message;
-                    errorMsg.style.display = 'block';
-                }
-            } catch (error) {
-                errorMsg.textContent = '❌ Error: ' + error.message;
-                errorMsg.style.display = 'block';
-            }
-        }
-
-        // Start countdown timer for verification code
-        function startVerificationCountdown(expiresAtStr) {
-            verificationExpiresAt = new Date(expiresAtStr);
-            
-            // Clear any existing countdown
-            if (verificationCountdownInterval) {
-                clearInterval(verificationCountdownInterval);
-            }
-            
-            // Update immediately
-            updateVerificationCountdown();
-            
-            // Update every second
-            verificationCountdownInterval = setInterval(updateVerificationCountdown, 1000);
-        }
-        
-        function updateVerificationCountdown() {
-            if (!verificationExpiresAt) return;
-            
-            const now = new Date();
-            const diff = verificationExpiresAt - now;
-            
-            if (diff <= 0) {
-                clearInterval(verificationCountdownInterval);
-                document.getElementById('verificationCountdown').innerHTML = '⏰ Code expired! Please <a onclick="resendVerificationCode()" style="color: #667eea; font-weight: 700; text-decoration: underline; cursor: pointer;">request a new code</a>';
-                document.getElementById('verificationCountdown').style.background = '#fff3cd';
-                document.getElementById('verificationCountdown').style.borderLeftColor = '#ffc107';
-                document.getElementById('verificationCountdown').style.color = '#856404';
-                return;
-            }
-            
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            
-            document.getElementById('verificationCountdown').innerHTML = `⏱️ Code expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // Handle email verification code submission
-        async function submitVerificationCode() {
-            const userId = document.getElementById('currentUserIdForVerification').value;
-            const code = document.getElementById('verificationCode').value;
-            const errorMsg = document.getElementById('verificationErrorMessage');
-            const successMsg = document.getElementById('verificationSuccessMessage');
-
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-
-            if (!code || code.length !== 6) {
-                errorMsg.textContent = '❌ Please enter a valid 6-digit code';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            try {
-                const response = await fetch(API_BASE + 'auth.php?action=verify-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, code: code })
-                });
-
-                const data = await response.json();
-                if (data.status === 'success') {
-                    successMsg.textContent = '✅ ' + data.message;
-                    successMsg.style.display = 'block';
-                    
-                    // Load dashboard after 1.5 seconds
-                    setTimeout(() => {
-                        loadDashboard();
-                    }, 1500);
-                } else {
-                    errorMsg.textContent = '❌ ' + data.message;
-                    errorMsg.style.display = 'block';
-                }
-            } catch (error) {
-                errorMsg.textContent = '❌ Verification failed: ' + error.message;
-                errorMsg.style.display = 'block';
-            }
-        }
-
-        // Resend verification code
-        async function resendVerificationCode() {
-            const userId = document.getElementById('currentUserIdForVerification').value;
-            const errorMsg = document.getElementById('verificationErrorMessage');
-            const successMsg = document.getElementById('verificationSuccessMessage');
-
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-
-            try {
-                // In a real app, you would call a resend endpoint
-                // For now, show a message
-                successMsg.textContent = '✅ Verification code resent to your email';
-                successMsg.style.display = 'block';
-                
-                // Reset the countdown with 5 minutes
-                const expiresAt = new Date();
-                expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-                startVerificationCountdown(expiresAt.toISOString());
-                
-                setTimeout(() => {
-                    successMsg.style.display = 'none';
-                }, 3000);
-            } catch (error) {
-                errorMsg.textContent = '❌ Failed to resend code: ' + error.message;
-                errorMsg.style.display = 'block';
-            }
+            // In a real application, you would:
+            // 1. Send a POST request to generate a reset token
+            // 2. Send an email with a password reset link
+            // 3. Allow user to set a new password via that link
         }
 
         // Load dashboard after login
