@@ -1,0 +1,3221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Irrigation System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+            padding: 8px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 4px;
+        }
+
+        /* Login/Auth Styles */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-card h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+
+        .auth-card .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .toggle-form button {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .forgot-password-link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .forgot-password-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .forgot-password-link a:hover {
+            text-decoration: underline;
+            color: #5568d3;
+        }
+
+        .google-signin-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            color: #333;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .google-signin-btn:hover {
+            background: #f9f9f9;
+            border-color: #4285f4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3);
+        }
+
+        .google-signin-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #ef4444;
+            color: #c00;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        #dashboard {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation Styles */
+        .dashboard-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            color: #333;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .sidebar h3 {
+            color: #999;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            margin-top: 20px;
+        }
+
+        .sidebar h3:first-child {
+            margin-top: 0;
+        }
+
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            background: #f3f4f6;
+            color: #333;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: #e5e7eb;
+            transform: translateX(5px);
+            color: #667eea;
+        }
+
+        .nav-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .page-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        .page-title {
+            font-size: 2.2em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .page-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        /* Dashboard Header */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .user-info {
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid white;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            color: white;
+            font-weight: 700;
+            padding: 0;
+        }
+
+        .user-avatar-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-avatar-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: white;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 12px 0;
+            min-width: 180px;
+            z-index: 1000;
+        }
+
+        .user-dropdown.active {
+            display: block;
+        }
+
+        .user-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: all 0.2s;
+        }
+
+        .user-dropdown-item:hover {
+            background: #f3f4f6;
+            padding-left: 24px;
+        }
+
+        .user-dropdown-logout {
+            border-top: 1px solid #e5e7eb;
+            color: #ef4444;
+        }
+
+        .user-dropdown-logout:hover {
+            background: #fee2e2;
+        }
+
+        /* Hamburger Menu Styles */
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            background: none;
+            border: none;
+            cursor: pointer;
+            gap: 5px;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .hamburger-menu:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .hamburger-menu span {
+            width: 24px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-menu.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-menu.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            right: 0px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            z-index: 1000;
+            min-width: 180px;
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .mobile-menu-item:hover {
+            background: #f3f4f6;
+            color: #667eea;
+        }
+
+        .mobile-menu-logout {
+            border-top: 1px solid #e5e7eb;
+            margin-top: 8px;
+            padding-top: 8px;
+            color: #ef4444 !important;
+        }
+
+        .mobile-menu-logout:hover {
+            background: #fee !important;
+            color: #dc2626 !important;
+        }
+
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 18px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-indicator.active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-indicator.inactive {
+            background: #ef4444;
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .control-btn.start {
+            background: #10b981;
+            color: white;
+        }
+
+        .control-btn.start:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .control-btn.stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .control-btn.stop:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .zone {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .zone-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #cbd5e1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #10b981;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .moisture-bar {
+            width: 100%;
+            height: 25px;
+            background: #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .moisture-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24 0%, #10b981 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .schedule-time {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .time-input {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .time-input::placeholder {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .alert {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #92400e;
+        }
+
+        .weather-stat {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .weather-stat-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .weather-stat-value {
+            font-size: 1.875rem;
+            font-weight: bold;
+        }
+
+        .weather-stat-label {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .weather-setting {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .weather-setting:last-child {
+            margin-bottom: 0;
+        }
+
+        .weather-checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .weather-checkbox {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+
+        .weather-checkbox-text {
+            color: #333;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }
+
+            header {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+
+            .card {
+                padding: 14px;
+                border-radius: 12px;
+            }
+
+            .card h2 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .user-info {
+                font-size: 0.9em;
+            }
+
+            .btn-logout {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+
+            .control-btn {
+                padding: 11px;
+                font-size: 0.95em;
+                margin-bottom: 8px;
+            }
+
+            .zone {
+                padding: 11px;
+                margin-bottom: 10px;
+            }
+
+            .zone-header {
+                gap: 8px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stat-box {
+                padding: 12px;
+            }
+
+            .stat-value {
+                font-size: 1.8em;
+            }
+
+            .schedule-time {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .time-input {
+                padding: 10px;
+                font-size: 0.95em;
+            }
+
+            .icon {
+                font-size: 1em;
+            }
+
+            .weather-stat {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+
+            .weather-stat-value {
+                font-size: 1.6rem;
+            }
+
+            .weather-stat-label {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 6px;
+            }
+
+            .container {
+                padding: 0 3px;
+                position: relative;
+            }
+
+            header {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+
+            header h1 {
+                font-size: 1.3em;
+                margin-bottom: 3px;
+            }
+
+            header .subtitle {
+                font-size: 0.8em;
+            }
+
+            .dashboard-header {
+                flex-direction: row;
+                gap: 6px;
+                margin-bottom: 8px;
+                position: relative;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+
+            .user-info {
+                font-size: 0.85em;
+                display: none;
+            }
+
+            .btn-logout {
+                display: none;
+            }
+
+            .user-avatar-btn {
+                width: 36px;
+                height: 36px;
+            }
+
+            .user-avatar-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .user-dropdown {
+                min-width: 160px;
+            }
+
+            .hamburger-menu {
+                display: flex;
+            }
+
+            .grid {
+                gap: 10px;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 10px;
+            }
+
+            .card h2 {
+                font-size: 1em;
+                margin-bottom: 10px;
+            }
+
+            .auth-card {
+                padding: 25px;
+                border-radius: 12px;
+            }
+
+            .auth-card h1 {
+                font-size: 1.6em;
+            }
+
+            .signup-options {
+                margin-top: 15px;
+                padding-top: 15px;
+            }
+
+            .signup-text {
+                font-size: 0.9em;
+                margin-bottom: 10px;
+            }
+
+            .signup-link {
+                font-size: 0.9em;
+            }
+
+            .or-divider {
+                text-align: center;
+                color: #999;
+                font-size: 0.85em;
+                font-weight: 600;
+                margin: 15px 0 10px 0;
+                letter-spacing: 1px;
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            .form-group label {
+                font-size: 0.9em;
+            }
+
+            .form-group input {
+                padding: 10px;
+                font-size: 0.95em;
+                border-radius: 6px;
+            }
+
+            .btn-login {
+                padding: 11px;
+                font-size: 0.95em;
+                margin-top: 8px;
+            }
+
+            .control-btn {
+                padding: 10px;
+                font-size: 0.9em;
+                margin-bottom: 7px;
+                border-radius: 8px;
+            }
+
+            .zone {
+                padding: 10px;
+                margin-bottom: 8px;
+            }
+
+            .zone-name {
+                font-size: 0.95em;
+            }
+
+            .zone-header {
+                gap: 6px;
+                margin-bottom: 8px;
+            }
+
+            .zone-activity {
+                font-size: 0.8em !important;
+            }
+
+            .moisture-bar {
+                height: 22px;
+                margin-top: 6px;
+            }
+
+            .moisture-fill {
+                font-size: 0.7em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                margin-top: 12px;
+            }
+
+            .stat-box {
+                padding: 10px;
+                border-radius: 8px;
+            }
+
+            .stat-value {
+                font-size: 1.6em;
+            }
+
+            .stat-label {
+                font-size: 0.8em;
+                margin-top: 4px;
+            }
+
+            .alert {
+                padding: 12px;
+                margin-top: 12px;
+                font-size: 0.85em;
+                border-radius: 6px;
+            }
+
+            .schedule-time {
+                gap: 6px;
+                margin-bottom: 12px;
+            }
+
+            .time-input {
+                padding: 9px;
+                font-size: 0.9em;
+                border-radius: 6px;
+            }
+
+            .weather-stat {
+                padding: 12px;
+                margin-bottom: 8px;
+                border-radius: 10px;
+            }
+
+            .weather-stat-content {
+                gap: 6px;
+                margin-bottom: 4px;
+            }
+
+            .weather-stat-value {
+                font-size: 1.5rem;
+            }
+
+            .weather-stat-label {
+                font-size: 0.75rem;
+            }
+
+            .weather-setting {
+                padding: 10px;
+                margin-bottom: 6px;
+                border-radius: 8px;
+            }
+
+            .weather-checkbox-label {
+                font-size: 0.9em;
+            }
+
+            .weather-checkbox {
+                width: 18px;
+                height: 18px;
+            }
+
+            .toggle-switch {
+                width: 48px;
+                height: 24px;
+            }
+
+            .toggle-slider {
+                width: 18px;
+                height: 18px;
+                top: 3px;
+                left: 3px;
+            }
+
+            .toggle-switch.active .toggle-slider {
+                transform: translateX(22px);
+            }
+        }
+
+
+        @media (max-width: 480px) {
+            body {
+                padding: 4px;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 0 2px;
+                position: relative;
+            }
+
+            header {
+                padding: 10px;
+                margin-bottom: 8px;
+                border-radius: 10px;
+            }
+
+            header h1 {
+                font-size: 1.2em;
+                margin-bottom: 2px;
+            }
+
+            header .subtitle {
+                font-size: 0.75em;
+            }
+
+            .dashboard-header {
+                margin-bottom: 6px;
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+
+            .user-info {
+                font-size: 0.75em;
+                width: 100%;
+                display: none;
+            }
+
+            .btn-logout {
+                width: 100%;
+                padding: 7px 8px;
+                font-size: 0.8em;
+                display: none;
+            }
+
+            .user-avatar-btn {
+                width: 32px;
+                height: 32px;
+            }
+
+            .user-avatar-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .user-dropdown {
+                min-width: 150px;
+                top: calc(100% + 8px);
+            }
+
+            .hamburger-menu {
+                display: flex;
+                padding: 5px 6px;
+            }
+
+            .grid {
+                gap: 8px;
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 10px;
+                border-radius: 8px;
+                margin-bottom: 6px;
+            }
+
+            .card h2 {
+                font-size: 0.95em;
+                margin-bottom: 8px;
+                gap: 6px;
+            }
+
+            .auth-container {
+                padding: 10px;
+            }
+
+            .auth-card {
+                padding: 20px;
+                border-radius: 10px;
+                max-width: 100%;
+            }
+
+            .auth-card h1 {
+                font-size: 1.4em;
+                margin-bottom: 8px;
+            }
+
+            .auth-card .subtitle {
+                margin-bottom: 20px;
+                font-size: 0.8em;
+            }
+
+            .form-group {
+                margin-bottom: 10px;
+            }
+
+            .form-group label {
+                font-size: 0.85em;
+                margin-bottom: 4px;
+            }
+
+            .form-group input {
+                padding: 9px;
+                font-size: 0.9em;
+            }
+
+            .btn-login {
+                padding: 10px;
+                font-size: 0.9em;
+                font-weight: 600;
+            }
+
+            .toggle-form {
+                margin-top: 15px;
+                font-size: 0.8em;
+            }
+
+            .error-message {
+                padding: 8px;
+                font-size: 0.85em;
+                margin-bottom: 10px;
+            }
+
+            .signup-options {
+                margin-top: 12px;
+                padding-top: 12px;
+            }
+
+            .signup-text {
+                font-size: 0.85em;
+                margin-bottom: 8px;
+            }
+
+            .signup-link {
+                font-size: 0.85em;
+            }
+
+            .or-divider {
+                font-size: 0.8em;
+                margin: 12px 0 8px 0;
+            }
+
+            .control-btn {
+                padding: 9px;
+                font-size: 0.85em;
+                margin-bottom: 6px;
+            }
+
+            .control-btn.start {
+                width: 100%;
+            }
+
+            .control-btn.stop {
+                width: 100%;
+            }
+
+            .zone {
+                padding: 9px;
+                margin-bottom: 7px;
+                background: #f3f4f6;
+            }
+
+            .zone-header {
+                gap: 5px;
+                margin-bottom: 7px;
+            }
+
+            .zone-name {
+                font-size: 0.9em;
+                font-weight: 600;
+            }
+
+            .zone-activity {
+                font-size: 0.75em !important;
+            }
+
+            .moisture-bar {
+                height: 20px;
+                margin-top: 5px;
+            }
+
+            .moisture-fill {
+                font-size: 0.65em;
+            }
+
+            .toggle-switch {
+                width: 44px;
+                height: 22px;
+            }
+
+            .toggle-slider {
+                width: 16px;
+                height: 16px;
+                top: 3px;
+                left: 3px;
+            }
+
+            .toggle-switch.active .toggle-slider {
+                transform: translateX(20px);
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                margin-top: 10px;
+            }
+
+            .stat-box {
+                padding: 8px;
+                background: #f3f4f6;
+            }
+
+            .stat-value {
+                font-size: 1.4em;
+                color: #667eea;
+            }
+
+            .stat-label {
+                font-size: 0.75em;
+                color: #666;
+                margin-top: 3px;
+            }
+
+            .alert {
+                padding: 10px;
+                margin-top: 10px;
+                font-size: 0.8em;
+                border-left: 3px solid #f59e0b;
+            }
+
+            .schedule-time {
+                gap: 5px;
+                margin-bottom: 10px;
+            }
+
+            .time-input {
+                padding: 8px;
+                font-size: 0.85em;
+                border: 2px solid #e5e7eb;
+                border-radius: 6px;
+            }
+
+            .weather-stat {
+                padding: 10px;
+                margin-bottom: 8px;
+                background: #f3f4f6;
+                border-radius: 8px;
+            }
+
+            .weather-stat-content {
+                gap: 6px;
+                margin-bottom: 4px;
+            }
+
+            .weather-stat-value {
+                font-size: 1.3rem;
+                font-weight: bold;
+            }
+
+            .weather-stat-label {
+                font-size: 0.7em;
+                color: #666;
+            }
+
+            .weather-setting {
+                padding: 8px;
+                margin-bottom: 5px;
+                background: #f3f4f6;
+                border-radius: 6px;
+            }
+
+            .weather-checkbox-label {
+                font-size: 0.85em;
+            }
+
+            .weather-checkbox {
+                width: 16px;
+                height: 16px;
+                margin-right: 8px;
+            }
+
+            .icon {
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .card h2 {
+                font-size: 0.85em;
+            }
+
+            .or-divider {
+                font-size: 0.75em;
+                margin: 10px 0 7px 0;
+            }
+
+            .control-btn {
+                padding: 8px;
+                font-size: 0.8em;
+            }
+
+            .zone {
+                padding: 8px;
+            }
+
+            .stat-value {
+                font-size: 1.2em;
+            }
+
+            .weather-stat-value {
+                font-size: 1.1rem;
+            }
+
+            header {
+                padding: 8px;
+                margin-bottom: 6px;
+            }
+
+            header h1 {
+                font-size: 0.95em;
+                margin-bottom: 2px;
+            }
+
+            header .subtitle {
+                font-size: 0.65em;
+            }
+
+            .dashboard-header {
+                gap: 4px;
+                margin-bottom: 4px;
+            }
+
+            .user-avatar-btn {
+                width: 30px;
+                height: 30px;
+            }
+
+            .user-avatar-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .user-dropdown {
+                min-width: 140px;
+                top: calc(100% + 6px);
+            }
+
+            .hamburger-menu span {
+                width: 20px;
+                height: 2px;
+            }
+        }
+
+        /* Forgot Password Form Styles */
+        .reset-success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .reset-error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .btn-back-to-login {
+            width: 100%;
+            padding: 12px;
+            background: #e5e7eb;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .btn-back-to-login:hover {
+            background: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider-text {
+            color: #999;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+        .signup-options {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .signup-text {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 12px;
+        }
+
+        .signup-link {
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .signup-link:hover {
+            color: #5568d3;
+            text-decoration: underline;
+        }
+
+        .signup-buttons {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+
+        .btn-signup-link {
+            padding: 10px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-signup-link:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+    <!-- Google Sign-In Script -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <!-- Login/Register Section -->
+    <div id="authSection" class="auth-container">
+        <div class="auth-card">
+            <h1>💧 Irrigation</h1>
+            <p class="subtitle">Smart Garden Control</p>
+            <input type="hidden" id="currentUserIdForVerification">
+            <div id="errorMessage" class="error-message"></div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password">
+                </div>
+                <button class="btn-login" onclick="handleLogin()">Sign In</button>
+                <div class="forgot-password-link">
+                    <a onclick="toggleForgotPasswordForm()">Forgot password?</a>
+                </div>
+
+                <div class="signup-options">
+                    <p class="signup-text">Don't have an account? <a class="signup-link" onclick="toggleForm()">Sign up here</a></p>
+                    
+                    <div class="or-divider">OR</div>
+                    
+                    <button class="google-signin-btn" id="googleSignUpBtn" onclick="handleGoogleSignUp()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label for="regUsername">Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose username">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="regFirstName">First Name</label>
+                        <input type="text" id="regFirstName" placeholder="First name">
+                    </div>
+                    <div class="form-group">
+                        <label for="regLastName">Last Name</label>
+                        <input type="text" id="regLastName" placeholder="Last name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" placeholder="Enter password">
+                </div>
+                <button class="btn-login" onclick="handleRegister()">Create Account</button>
+
+                <div class="signup-options">
+                    <p class="signup-text">Already have an account? <a class="signup-link" onclick="toggleForm()">Sign in here</a></p>
+                    
+                    <div class="or-divider">OR</div>
+                    
+                    <button class="google-signin-btn" id="googleSignInBtn" onclick="handleGoogleSignIn()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+                </div>
+            </div>
+
+            <!-- Forgot Password Form -->
+            <div id="forgotPasswordForm" style="display: none;">
+                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">🔐 Reset Password</h2>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter your email address and we'll send you a link to reset your password</p>
+                
+                <div id="resetSuccessMessage" class="reset-success-message"></div>
+                <div id="resetErrorMessage" class="reset-error-message"></div>
+                
+                <div class="form-group">
+                    <label for="resetEmail">Email Address</label>
+                    <input type="email" id="resetEmail" placeholder="Enter your email address">
+                </div>
+                
+                <button class="btn-login" style="background: #667eea;" onclick="sendPasswordReset()">Send Reset Link</button>
+                <button class="btn-back-to-login" onclick="toggleForgotPasswordForm()">Back to Sign In</button>
+            </div>
+
+            <!-- Email Verification Form -->
+            <div id="emailVerificationForm" style="display: none;">
+                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">✉️ Verify Your Email</h2>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">We've sent a 6-digit code to your email address. Enter it below to complete registration.</p>
+                
+                <div id="verificationCountdown" style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; text-align: center; color: #667eea; font-weight: 600; font-size: 0.95em;"></div>
+                
+                <div id="verificationErrorMessage" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
+                <div id="verificationSuccessMessage" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
+                
+                <div class="form-group">
+                    <label for="verificationCode">Verification Code</label>
+                    <input type="text" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric">
+                </div>
+                
+                <button class="btn-login" style="background: #667eea;" onclick="submitVerificationCode()">Verify Email</button>
+                
+                <p style="color: #666; font-size: 0.85em; margin-top: 15px; text-align: center;">
+                    Didn't receive the code? <a onclick="resendVerificationCode()" style="color: #667eea; cursor: pointer; font-weight: 600; text-decoration: underline;">Resend code</a>
+                </p>
+            </div>
+
+            <!-- Password Reset Code Form -->
+            <div id="passwordResetCodeForm" style="display: none;">
+                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">🔑 Reset Your Password</h2>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter the 6-digit code we sent to your email and create a new password.</p>
+                
+                <input type="hidden" id="resetEmailForPasswordChange">
+                
+                <div id="resetCodeErrorMessage" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
+                <div id="resetCodeSuccessMessage" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; display: none;"></div>
+                
+                <div class="form-group">
+                    <label for="resetCode">Reset Code</label>
+                    <input type="text" id="resetCode" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric">
+                </div>
+                
+                <div class="form-group">
+                    <label for="resetNewPassword">New Password</label>
+                    <input type="password" id="resetNewPassword" placeholder="Enter new password">
+                </div>
+                
+                <div class="form-group">
+                    <label for="resetConfirmPassword">Confirm Password</label>
+                    <input type="password" id="resetConfirmPassword" placeholder="Confirm new password">
+                </div>
+                
+                <button class="btn-login" style="background: #667eea;" onclick="submitPasswordResetCode()">Reset Password</button>
+                
+                <button class="btn-back-to-login" onclick="toggleForgotPasswordForm()">Back to Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard">
+        <!-- Header -->
+        <div class="dashboard-header" style="background: white; padding: 20px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 0; width: 100%;">
+            <div style="flex: 1; min-width: 0; overflow: hidden;">
+                <h1 style="margin: 0; font-size: 2em;">💧 Smart Irrigation System</h1>
+                <p class="subtitle" style="margin: 5px 0 0 0;">Web Management Dashboard</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0; position: relative;">
+                <div style="position: relative;">
+                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()" title="User Profile">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M 12 14 C 7 14 3 17 3 21 L 21 21 C 21 17 17 14 12 14 Z"></path>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <button class="user-dropdown-item" id="userNameDisplay">👤 User</button>
+                        <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()">🚪 Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Wrapper with Sidebar -->
+        <div class="dashboard-wrapper">
+            <!-- Sidebar Navigation -->
+            <div class="sidebar">
+                <h3>Pages</h3>
+                <button class="nav-btn active" onclick="switchPage('system', this)">System Control</button>
+                <button class="nav-btn" onclick="switchPage('zones', this)">Zone Management</button>
+                <button class="nav-btn" onclick="switchPage('schedule', this)">Schedules</button>
+                <button class="nav-btn" onclick="switchPage('sensors', this)">Sensors & Weather</button>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- System Status Page -->
+                <div id="system-page" class="page-section active">
+                    <h2 class="page-title"> System Control</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>
+                                <span class="status-indicator" id="systemStatus"></span>
+                                System Status
+                            </h2>
+                            
+                            <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                                    <span style="font-weight: 600; color: #333;">🤖 Auto Mode</span>
+                                    <div class="toggle-switch active" id="autoModeToggle" onclick="toggleAutoMode(this)">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </label>
+                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Automatically waters zones when soil moisture drops below threshold</p>
+                            </div>
+
+                            <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 15px; border-radius: 10px; margin-bottom: 20px;" id="autoStatus">
+                                <div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div>
+                                <div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                    Moisture Threshold
+                                </label>
+                                <input type="range" id="thresholdSlider" min="30" max="80" value="50" 
+                                       style="width: 100%;" oninput="updateThreshold(this.value)">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666; margin-top: 5px;">
+                                    <span>30%</span>
+                                    <span id="thresholdValue" style="font-weight: 600; color: #667eea;">50%</span>
+                                    <span>80%</span>
+                                </div>
+                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Water zones automatically when moisture falls below this level</p>
+                            </div>
+                            
+                            <button class="control-btn start" id="startBtn" onclick="startSystem()">
+                                ▶ Manual Start
+                            </button>
+                            <button class="control-btn stop" id="stopBtn" onclick="stopSystem()" disabled>
+                                ⏹ Stop All
+                            </button>
+                            <button class="control-btn" id="clearFaultBtn" onclick="clearPumpFault()" style="background: #f59e0b; color: white; display: none; margin-top: 10px;">
+                                🔧 Clear Pump Fault
+                            </button>
+
+                            <div class="stats">
+                                <div class="stat-box">
+                                    <div class="stat-value" id="dailyUsage">245</div>
+                                    <div class="stat-label">Liters Today</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value" id="runtime">45</div>
+                                    <div class="stat-label">Minutes Active</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value" id="pumpStatus" style="font-size: 1.5em;">Idle</div>
+                                    <div class="stat-label">Pump Status</div>
+                                </div>
+                            </div>
+
+                            <div class="weather-stat" style="margin-top: 16px;">
+                                <div class="weather-stat-content">
+                                    <div class="weather-stat-value" id="tankLevel">Inactive</div>
+                                </div>
+                                <div class="weather-stat-label">Water Tank Level</div>
+                            </div>
+
+                            <!-- Low Tank Alert -->
+                            <div id="lowTankAlert" class="alert" style="display: none; background: #f8d7da; border-color: #f5c6cb; color: #721c24; margin-top: 16px;">
+                                <strong>⚠️ Low Water Tank!</strong><br>
+                                <span style="font-size: 0.95em;">Water tank level is below 30%. Please refill the tank soon to prevent system shutdown.</span>
+                                <button onclick="hideLowTankAlert()" style="float: right; background: transparent; border: none; font-size: 1.2em; cursor: pointer;">×</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone Management Page -->
+                <div id="zones-page" class="page-section">
+                    <h2 class="page-title">Zone Management</h2>
+                    <div class="page-content">
+                        <div class="card" style="grid-column: 1 / -1;">
+                            <h2>Zone Control</h2>
+                            <div id="zoneControl"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Page -->
+                <div id="schedule-page" class="page-section">
+                    <h2 class="page-title"> Irrigation Schedules</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>Schedule Settings</h2>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                    Morning Schedule
+                                </label>
+                                <div class="schedule-time">
+                                    <input type="time" class="time-input" id="morningTime" value="06:00">
+                                    <input type="number" class="time-input" id="morningDuration" placeholder="Duration (min)" value="30" min="1" max="180">
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                    Evening Schedule
+                                </label>
+                                <div class="schedule-time">
+                                    <input type="time" class="time-input" id="eveningTime" value="18:00">
+                                    <input type="number" class="time-input" id="eveningDuration" placeholder="Duration (min)" value="30" min="1" max="180">
+                                </div>
+                            </div>
+
+                            <button class="control-btn" style="background: #667eea; color: white;" onclick="saveSchedule()">
+                                💾 Save Schedule
+                            </button>
+
+                            <div class="alert" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+                                <strong>📅 Scheduled Runs:</strong><br>
+                                <div id="morningScheduleDisplay" style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Morning: 6:00 AM for 30 minutes</div>
+                                <div id="eveningScheduleDisplay" style="margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Evening: 6:00 PM for 30 minutes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensors & Weather Page -->
+                <div id="sensors-page" class="page-section">
+                    <h2 class="page-title">Sensors & Weather</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>Weather & Sensors</h2>
+                            
+                            <!-- Weather Stats -->
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>🌡️</span>
+                                    <div class="weather-stat-value">28°C</div>
+                                </div>
+                                <div class="weather-stat-label">Current Temperature</div>
+                            </div>
+
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>💧</span>
+                                    <div class="weather-stat-value">65%</div>
+                                </div>
+                                <div class="weather-stat-label">Humidity</div>
+                            </div>
+
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span>🌧️</span>
+                                    <div class="weather-stat-value">0mm</div>
+                                </div>
+                                <div class="weather-stat-label">Rain Today</div>
+                            </div>
+
+                            <!-- Settings -->
+                            <div class="weather-setting">
+                                <label class="weather-checkbox-label">
+                                    <input type="checkbox" id="skipRain" checked class="weather-checkbox">
+                                    <span class="weather-checkbox-text">Skip watering if rain detected</span>
+                                </label>
+                            </div>
+
+                            <div class="weather-setting">
+                                <label class="weather-checkbox-label">
+                                    <input type="checkbox" id="autoAdjust" checked class="weather-checkbox">
+                                    <span class="weather-checkbox-text">Auto-adjust based on soil moisture</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'api/';
+        
+        // Variable to track verification code expiration
+        let verificationExpiresAt = null;
+        let verificationCountdownInterval = null;
+        let currentUser = null;
+        let systemRunning = false;
+        let autoMode = true;
+        let dailyUsage = 245;
+        let runtime = 45;
+        let moistureThreshold = 50;
+        let zones = [];
+        let systemSettings = {};
+        let currentTankLevel = 100;
+        let systemStartTime = null;
+        let systemTimer = null;
+        let litersPerMinute = 8; // 8 liters per minute (adjustable)
+        let lowTankAlertShown = false; // Track if low tank alert has been shown
+        let pumpFault = false; // Track pump fault status
+        let pumpLockout = false; // Track if pump is locked out due to empty tank
+
+        // Page Navigation
+        function switchPage(pageId, button) {
+            // Hide all pages
+            const pages = document.querySelectorAll('.page-section');
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Remove active class from all nav buttons
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected page
+            const pageElement = document.getElementById(pageId + '-page');
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+            
+            // Mark button as active
+            if (button) {
+                button.classList.add('active');
+            }
+        }
+
+        // Hamburger Menu Functions
+        function toggleMobileMenu() {
+            const hamburger = document.getElementById('hamburgerBtn');
+            const menu = document.getElementById('mobileMenu');
+            if (hamburger && menu) {
+                hamburger.classList.toggle('active');
+                menu.classList.toggle('active');
+            }
+        }
+
+        function closeMobileMenu() {
+            const hamburger = document.getElementById('hamburgerBtn');
+            const menu = document.getElementById('mobileMenu');
+            if (hamburger && menu) {
+                hamburger.classList.remove('active');
+                menu.classList.remove('active');
+            }
+        }
+
+        // User Dropdown Functions
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('active');
+            }
+        }
+
+        function closeUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('active');
+            }
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const hamburger = document.getElementById('hamburgerBtn');
+            const menu = document.getElementById('mobileMenu');
+            const userAvatarBtn = document.getElementById('userAvatarBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (hamburger && menu && !hamburger.contains(e.target) && !menu.contains(e.target)) {
+                closeMobileMenu();
+            }
+            
+            if (userAvatarBtn && userDropdown && !userAvatarBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                closeUserDropdown();
+            }
+        });
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            // Show success message (you can customize this)
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.style.color = '#34A853'; // Google green
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                errorDiv.style.color = 'red'; // Reset to default
+            }, 5000);
+        }
+
+        // Initialize Google Sign-In on page load
+        function initializeGoogleSignIn() {
+            if (typeof google !== 'undefined' && google.accounts) {
+                try {
+                    google.accounts.id.initialize({
+                        client_id: '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com',
+                        callback: handleCredentialResponse
+                    });
+                    console.log('Google Sign-In initialized');
+                } catch (error) {
+                    console.error('Google Sign-In initialization error:', error);
+                }
+            }
+        }
+
+        // Call initialization when page loads
+        window.addEventListener('load', initializeGoogleSignIn);
+
+        // Toggle between login and register forms
+        function toggleForm() {
+            document.getElementById('loginForm').style.display = 
+                document.getElementById('loginForm').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = 
+                document.getElementById('registerForm').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Clear form fields
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regFirstName').value = '';
+            document.getElementById('regLastName').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPassword').value = '';
+        }
+
+        // Handle login
+        async function handleLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showError('Please enter username and password');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + 'auth.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    await loadDashboard();
+                } else if (data.requires_verification) {
+                    // User hasn't verified email yet
+                    document.getElementById('currentUserIdForVerification').value = data.user_id;
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('emailVerificationForm').style.display = 'block';
+                    document.getElementById('verificationCode').value = '';
+                    document.getElementById('verificationErrorMessage').style.display = 'none';
+                    
+                    // Start countdown (5 minutes from now for login flow)
+                    if (data.expires_at) {
+                        startVerificationCountdown(data.expires_at);
+                    } else {
+                        // Fallback: estimate based on current time
+                        const expiresAt = new Date();
+                        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+                        startVerificationCountdown(expiresAt.toISOString());
+                    }
+                    
+                    showError(data.message);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('Login failed: ' + error.message);
+            }
+        }
+
+        // Handle registration
+        async function handleRegister() {
+            const username = document.getElementById('regUsername').value;
+            const firstName = document.getElementById('regFirstName').value;
+            const lastName = document.getElementById('regLastName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (!username || !firstName || !lastName || !email || !password) {
+                showError('Please fill all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + 'auth.php?action=register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, firstName, lastName, email, password })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // Store user ID for verification
+                    document.getElementById('currentUserIdForVerification').value = data.user_id;
+                    
+                    // Hide registration form and show verification form
+                    document.getElementById('registerForm').style.display = 'none';
+                    document.getElementById('emailVerificationForm').style.display = 'block';
+                    document.getElementById('verificationErrorMessage').style.display = 'none';
+                    document.getElementById('verificationSuccessMessage').style.display = 'none';
+                    document.getElementById('verificationCode').value = '';
+                    
+                    // Start countdown with expiration time from server
+                    if (data.expires_at) {
+                        startVerificationCountdown(data.expires_at);
+                    }
+                    
+                    showError(data.message);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('Registration failed: ' + error.message);
+            }
+        }
+
+        // Handle Google Sign In
+        async function handleGoogleSignIn() {
+            console.log('Google Sign In clicked');
+            try {
+                if (typeof google !== 'undefined' && google.accounts) {
+                    const clientId = '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com';
+                    
+                    // Re-initialize with callback
+                    google.accounts.id.initialize({
+                        client_id: clientId,
+                        callback: handleCredentialResponse,
+                        auto_select: false,
+                        itp_support: true
+                    });
+                    
+                    console.log('Google ID initialized for login');
+                    
+                    // Trigger the account selector popup
+                    google.accounts.id.prompt((notification) => {
+                        console.log('Prompt result:', notification);
+                        
+                        if (notification.isNotDisplayed()) {
+                            console.log('Prompt not displayed, trying alternative method');
+                            // Use a zero-width hidden element to trigger the standard popup
+                            const div = document.createElement('div');
+                            div.style.position = 'absolute';
+                            div.style.width = '0';
+                            div.style.height = '0';
+                            document.body.appendChild(div);
+                            
+                            google.accounts.id.renderButton(div, {
+                                type: 'standard',
+                                size: 'large',
+                                theme: 'outline',
+                                text: 'signin_with',
+                                click_listener: () => {
+                                    console.log('Google button clicked via render');
+                                }
+                            });
+                            
+                            // Find and click the rendered button
+                            const googleButton = div.querySelector('div[role="button"]');
+                            if (googleButton) {
+                                googleButton.click();
+                            }
+                            
+                            // Clean up after a delay
+                            setTimeout(() => {
+                                document.body.removeChild(div);
+                            }, 5000);
+                        }
+                    });
+                } else {
+                    showError('Google Sign-In library not loaded. Please refresh the page.');
+                    console.error('Google Sign-In library not available');
+                }
+            } catch (error) {
+                console.error('Google Sign-In error:', error);
+                showError('Error initiating Google sign-in: ' + error.message);
+            }
+        }
+
+        // Handle Google Sign Up
+        async function handleGoogleSignUp() {
+            // Same as sign in - Google authentication works for both
+            handleGoogleSignIn();
+        }
+
+        // Attempt Google login with popup
+        async function attemptGoogleLoginWithPopup() {
+            try {
+                const clientId = '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com';
+                const redirectUri = window.location.origin + window.location.pathname;
+                const scope = 'openid%20email%20profile';
+                
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${clientId}` +
+                    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                    `&response_type=id_token` +
+                    `&scope=${scope}` +
+                    `&nonce=${generateNonce()}`;
+                
+                window.location.href = authUrl;
+            } catch (error) {
+                console.error('Popup login error:', error);
+                showError('Unable to open Google sign-in');
+            }
+        }
+
+        // Generate nonce for security
+        function generateNonce() {
+            return Math.random().toString(36).substring(2, 15) + 
+                   Math.random().toString(36).substring(2, 15);
+        }
+
+        // Process Google credential response
+        async function handleCredentialResponse(response) {
+            try {
+                console.log('Credential response received:', response);
+                const token = response.credential;
+                
+                if (!token) {
+                    showError('No credential received from Google');
+                    return;
+                }
+                
+                // Decode the JWT token (the payload is the second part)
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const userData = JSON.parse(jsonPayload);
+                console.log('Decoded user data:', userData);
+
+                // Extract user information
+                const googleUserData = {
+                    id: userData.sub,
+                    email: userData.email,
+                    firstName: userData.given_name || userData.name,
+                    lastName: userData.family_name || '',
+                    picture: userData.picture
+                };
+
+                console.log('Sending to backend:', googleUserData);
+
+                // Send to backend
+                const authResponse = await fetch(API_BASE + 'auth.php?action=google-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        token: token,
+                        userData: googleUserData
+                    })
+                });
+
+                console.log('Backend response status:', authResponse.status);
+                const responseText = await authResponse.text();
+                console.log('Backend raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Failed to parse JSON:', parseError);
+                    showError('Server error. Check console for details. Response: ' + responseText.substring(0, 100));
+                    return;
+                }
+                
+                console.log('Parsed backend response:', data);
+                
+                if (data.status === 'success') {
+                    showSuccess('Welcome ' + (googleUserData.firstName || 'User') + '!');
+                    setTimeout(() => loadDashboard(), 1500);
+                } else {
+                    showError('Google authentication failed: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Credential response error:', error);
+                showError('Error processing Google sign-in: ' + error.message);
+            }
+        }
+
+        // Toggle between login and forgot password forms
+        function toggleForgotPasswordForm() {
+            const loginForm = document.getElementById('loginForm');
+            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+            
+            if (loginForm && forgotPasswordForm) {
+                loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
+                forgotPasswordForm.style.display = forgotPasswordForm.style.display === 'none' ? 'block' : 'none';
+                
+                // Clear messages and input
+                if (forgotPasswordForm.style.display !== 'none') {
+                    document.getElementById('resetEmail').value = '';
+                    document.getElementById('resetEmail').focus();
+                    document.getElementById('resetSuccessMessage').style.display = 'none';
+                    document.getElementById('resetErrorMessage').style.display = 'none';
+                }
+            }
+        }
+
+        // Send password reset link
+        async function sendPasswordReset() {
+            const email = document.getElementById('resetEmail').value;
+            const successMsg = document.getElementById('resetSuccessMessage');
+            const errorMsg = document.getElementById('resetErrorMessage');
+
+            // Hide previous messages
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            if (!email) {
+                errorMsg.textContent = '❌ Please enter your email address';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (!email.includes('@')) {
+                errorMsg.textContent = '❌ Please enter a valid email address';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + 'auth.php?action=forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+                
+                successMsg.textContent = '✅ ' + data.message;
+                successMsg.style.display = 'block';
+                
+                // Store email for password reset
+                document.getElementById('resetEmailForPasswordChange').value = email;
+                
+                // Clear the input
+                document.getElementById('resetEmail').value = '';
+
+                // Show password reset code form after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('forgotPasswordForm').style.display = 'none';
+                    document.getElementById('passwordResetCodeForm').style.display = 'block';
+                    document.getElementById('resetCode').focus();
+                }, 2000);
+            } catch (error) {
+                errorMsg.textContent = '❌ Error: ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Handle password reset with code
+        async function submitPasswordResetCode() {
+            const email = document.getElementById('resetEmailForPasswordChange').value;
+            const code = document.getElementById('resetCode').value;
+            const newPassword = document.getElementById('resetNewPassword').value;
+            const confirmPassword = document.getElementById('resetConfirmPassword').value;
+            
+            const errorMsg = document.getElementById('resetCodeErrorMessage');
+            const successMsg = document.getElementById('resetCodeSuccessMessage');
+
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            if (!code || code.length !== 6) {
+                errorMsg.textContent = '❌ Please enter a valid 6-digit code';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (!newPassword || newPassword.length < 6) {
+                errorMsg.textContent = '❌ Password must be at least 6 characters';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorMsg.textContent = '❌ Passwords do not match';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + 'auth.php?action=reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, code: code, new_password: newPassword })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    successMsg.textContent = '✅ ' + data.message;
+                    successMsg.style.display = 'block';
+                    
+                    // Go back to login after 2 seconds
+                    setTimeout(() => {
+                        toggleForgotPasswordForm();
+                        document.getElementById('passwordResetCodeForm').style.display = 'none';
+                        document.getElementById('loginForm').style.display = 'block';
+                    }, 2000);
+                } else {
+                    errorMsg.textContent = '❌ ' + data.message;
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = '❌ Error: ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Start countdown timer for verification code
+        function startVerificationCountdown(expiresAtStr) {
+            verificationExpiresAt = new Date(expiresAtStr);
+            
+            // Clear any existing countdown
+            if (verificationCountdownInterval) {
+                clearInterval(verificationCountdownInterval);
+            }
+            
+            // Update immediately
+            updateVerificationCountdown();
+            
+            // Update every second
+            verificationCountdownInterval = setInterval(updateVerificationCountdown, 1000);
+        }
+        
+        function updateVerificationCountdown() {
+            if (!verificationExpiresAt) return;
+            
+            const now = new Date();
+            const diff = verificationExpiresAt - now;
+            
+            if (diff <= 0) {
+                clearInterval(verificationCountdownInterval);
+                document.getElementById('verificationCountdown').innerHTML = '⏰ Code expired! Please <a onclick="resendVerificationCode()" style="color: #667eea; font-weight: 700; text-decoration: underline; cursor: pointer;">request a new code</a>';
+                document.getElementById('verificationCountdown').style.background = '#fff3cd';
+                document.getElementById('verificationCountdown').style.borderLeftColor = '#ffc107';
+                document.getElementById('verificationCountdown').style.color = '#856404';
+                return;
+            }
+            
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('verificationCountdown').innerHTML = `⏱️ Code expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Handle email verification code submission
+        async function submitVerificationCode() {
+            const userId = document.getElementById('currentUserIdForVerification').value;
+            const code = document.getElementById('verificationCode').value;
+            const errorMsg = document.getElementById('verificationErrorMessage');
+            const successMsg = document.getElementById('verificationSuccessMessage');
+
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            if (!code || code.length !== 6) {
+                errorMsg.textContent = '❌ Please enter a valid 6-digit code';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + 'auth.php?action=verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, code: code })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    successMsg.textContent = '✅ ' + data.message;
+                    successMsg.style.display = 'block';
+                    
+                    // Load dashboard after 1.5 seconds
+                    setTimeout(() => {
+                        loadDashboard();
+                    }, 1500);
+                } else {
+                    errorMsg.textContent = '❌ ' + data.message;
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = '❌ Verification failed: ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Resend verification code
+        async function resendVerificationCode() {
+            const userId = document.getElementById('currentUserIdForVerification').value;
+            const errorMsg = document.getElementById('verificationErrorMessage');
+            const successMsg = document.getElementById('verificationSuccessMessage');
+
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            try {
+                // In a real app, you would call a resend endpoint
+                // For now, show a message
+                successMsg.textContent = '✅ Verification code resent to your email';
+                successMsg.style.display = 'block';
+                
+                // Reset the countdown with 5 minutes
+                const expiresAt = new Date();
+                expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+                startVerificationCountdown(expiresAt.toISOString());
+                
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 3000);
+            } catch (error) {
+                errorMsg.textContent = '❌ Failed to resend code: ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Load dashboard after login
+        async function loadDashboard() {
+            try {
+                const userResponse = await fetch(API_BASE + 'auth.php?action=user');
+                const userData = await userResponse.json();
+
+                if (userData.status === 'success') {
+                    currentUser = userData.user;
+                    document.getElementById('userNameDisplay').textContent = '👤 ' + currentUser.username;
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'flex';
+
+                    await loadZones();
+                    await loadSystemSettings();
+                    await loadSensorData();
+                    loadSavedSchedules();
+
+                    startAutoMonitoring();
+                }
+            } catch (error) {
+                showError('Failed to load dashboard');
+            }
+        }
+
+        // Load zones from backend
+        async function loadZones() {
+            try {
+                const response = await fetch(API_BASE + 'zones.php?action=list');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    zones = data.zones;
+                    renderZones();
+                }
+            } catch (error) {
+                console.error('Error loading zones:', error);
+            }
+        }
+
+        // Load system settings from backend
+        async function loadSystemSettings() {
+            try {
+                const response = await fetch(API_BASE + 'system.php?action=get');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    systemSettings = data.settings;
+                    autoMode = !!systemSettings.auto_mode;
+                    moistureThreshold = systemSettings.moisture_threshold;
+                    dailyUsage = systemSettings.daily_usage;
+                    runtime = systemSettings.runtime;
+                    updateDisplay();
+                    updateUISettings();
+                }
+            } catch (error) {
+                console.error('Error loading system settings:', error);
+            }
+        }
+
+        // Load sensor data
+        async function loadSensorData() {
+            try {
+                const response = await fetch(API_BASE + 'sensors.php?action=latest');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    data.sensors.forEach(sensor => {
+                        const zone = zones.find(z => z.id === sensor.id);
+                        if (zone) {
+                            zone.moisture_level = sensor.moisture_level;
+                        }
+                        // Update tank level from API only if system is NOT running
+                        // While system is running, tank level is calculated in real-time
+                        if (!systemRunning && sensor.tank_level !== undefined && sensor.tank_level !== null) {
+                            currentTankLevel = sensor.tank_level;
+                        }
+                    });
+                    updateZoneMoisture();
+                    // Only update display if system is not running
+                    if (!systemRunning) {
+                        updateTankLevel();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading sensor data:', error);
+            }
+        }
+
+        // Update tank level display
+        function updateTankLevel() {
+            const tankLevelEl = document.getElementById('tankLevel');
+            if (tankLevelEl) {
+                if (!systemRunning) {
+                    tankLevelEl.textContent = 'Inactive';
+                    tankLevelEl.style.color = '#9ca3af';
+                    return;
+                }
+
+                tankLevelEl.textContent = currentTankLevel + '%';
+                if (currentTankLevel >= 65) {
+                    tankLevelEl.style.color = '#667eea';
+                } else if (currentTankLevel >= 30) {
+                    tankLevelEl.style.color = '#f59e0b'; 
+                } else {
+                    tankLevelEl.style.color = '#ef4444';
+                }
+            }
+        }
+
+        // Render zones dynamically
+        function renderZones() {
+            const zoneControl = document.getElementById('zoneControl');
+            if (!zoneControl) return;
+
+            zoneControl.innerHTML = zones.map(zone => `
+                <div class="zone">
+                    <div class="zone-header">
+                        <span class="zone-name">${zone.zone_name}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="zone-activity" id="zone${zone.id}Activity" style="display: none; color: #10b981; font-size: 0.9em; font-weight: 600;">💧 Watering...</span>
+                            <div class="toggle-switch ${zone.enabled ? 'active' : ''}" id="zone${zone.id}Toggle" onclick="toggleZone(this, ${zone.id})">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="moisture-bar">
+                        <div class="moisture-fill" id="zone${zone.id}Moisture" style="width: ${zone.moisture_level}%">${zone.moisture_level}%</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
+                        <select id="zone${zone.id}Duration" class="time-input" style="flex: 1; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.9em;">
+                            <option value="5">5 minutes</option>
+                            <option value="10" selected>10 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="20">20 minutes</option>
+                            <option value="30">30 minutes</option>
+                        </select>
+                        <button class="control-btn" style="background: #10b981; color: white; padding: 8px 12px; flex: 1;" onclick="waterZoneNow(${zone.id})" id="zone${zone.id}WaterBtn">
+                             Water Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update UI settings
+        function updateUISettings() {
+            const autoToggle = document.getElementById('autoModeToggle');
+            if (autoToggle) {
+                autoToggle.classList.toggle('active', autoMode);
+            }
+            const thresholdSlider = document.getElementById('thresholdSlider');
+            if (thresholdSlider) {
+                thresholdSlider.value = moistureThreshold;
+                document.getElementById('thresholdValue').textContent = moistureThreshold + '%';
+            }
+        }
+
+        // Toggle zone
+        async function toggleZone(element, zoneId) {
+            element.classList.toggle('active');
+            const enabled = element.classList.contains('active');
+            
+            try {
+                await fetch(API_BASE + 'zones.php?action=toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ zone_id: zoneId, enabled: enabled })
+                });
+                const zone = zones.find(z => z.id === zoneId);
+                if (zone) zone.enabled = enabled;
+            } catch (error) {
+                console.error('Error toggling zone:', error);
+            }
+        }
+
+        // Manual zone watering
+        async function waterZoneNow(zoneId) {
+            const zone = zones.find(z => z.id === zoneId);
+            if (!zone) return;
+            
+            const durationSelect = document.getElementById(`zone${zoneId}Duration`);
+            const durationMinutes = parseInt(durationSelect.value);
+            const waterBtn = document.getElementById(`zone${zoneId}WaterBtn`);
+            const activitySpan = document.getElementById(`zone${zoneId}Activity`);
+            
+            // Disable button and show watering status
+            waterBtn.disabled = true;
+            waterBtn.style.opacity = '0.5';
+            activitySpan.style.display = 'inline';
+            
+            // Calculate liters
+            const totalLiters = Math.round(durationMinutes * litersPerMinute);
+            
+            try {
+                // Call API to record manual watering
+                const response = await fetch(API_BASE + 'zones.php?action=water_now', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        zone_id: zoneId, 
+                        duration_minutes: durationMinutes,
+                        liters: totalLiters
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Simulate watering for visual feedback
+                let elapsed = 0;
+                const wateringInterval = setInterval(() => {
+                    elapsed++;
+                    const progress = Math.min((elapsed / durationMinutes) * 100, 100);
+                    const moistureElement = document.getElementById(`zone${zoneId}Moisture`);
+                    if (moistureElement) {
+                        moistureElement.style.width = Math.min(zone.moisture_level + progress, 100) + '%';
+                    }
+                    
+                    if (elapsed >= durationMinutes) {
+                        clearInterval(wateringInterval);
+                        // Update zone moisture
+                        zone.moisture_level = Math.min(100, zone.moisture_level + 50);
+                        updateZoneMoisture();
+                        
+                        // Reset button
+                        waterBtn.disabled = false;
+                        waterBtn.style.opacity = '1';
+                        activitySpan.style.display = 'none';
+                        
+                        // Show success message
+                        alert(`✅ Zone Watering Complete!\n\n${zone.zone_name}\nDuration: ${durationMinutes} minutes\nWater Used: ${totalLiters} liters`);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error watering zone:', error);
+                waterBtn.disabled = false;
+                waterBtn.style.opacity = '1';
+                activitySpan.style.display = 'none';
+                alert('❌ Error watering zone. Please try again.');
+            }
+        }
+
+        // Update zone moisture
+        function updateZoneMoisture() {
+            zones.forEach(zone => {
+                const element = document.getElementById(`zone${zone.id}Moisture`);
+                if (element) {
+                    element.style.width = zone.moisture_level + '%';
+                    element.textContent = zone.moisture_level + '%';
+                }
+            });
+        }
+
+        // Toggle auto mode
+        async function toggleAutoMode(element) {
+            autoMode = !autoMode;
+            element.classList.toggle('active');
+            
+            try {
+                await fetch(API_BASE + 'system.php?action=update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ auto_mode: autoMode ? 1 : 0 })
+                });
+            } catch (error) {
+                console.error('Error updating auto mode:', error);
+            }
+
+            const autoStatus = document.getElementById('autoStatus');
+            if (autoStatus) {
+                if (autoMode) {
+                    autoStatus.innerHTML = '<div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div><div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>';
+                    autoStatus.style.background = '#f0fdf4';
+                    autoStatus.style.borderColor = '#86efac';
+                } else {
+                    autoStatus.innerHTML = '<div style="font-weight: 600; color: #92400e; margin-bottom: 5px;">⏸️ Auto Mode Disabled</div><div style="font-size: 0.85em; color: #b45309;">Manual control only</div>';
+                    autoStatus.style.background = '#fef3c7';
+                    autoStatus.style.borderColor = '#fcd34d';
+                }
+            }
+        }
+
+        // Update threshold
+        async function updateThreshold(value) {
+            moistureThreshold = parseInt(value);
+            document.getElementById('thresholdValue').textContent = value + '%';
+            
+            try {
+                await fetch(API_BASE + 'system.php?action=update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moisture_threshold: moistureThreshold })
+                });
+            } catch (error) {
+                console.error('Error updating threshold:', error);
+            }
+        }
+
+        // Start system
+        function startSystem() {
+            // Pump lockout - prevent starting if tank is too low
+            if (currentTankLevel < 20) {
+                pumpLockout = true;
+                setPumpFault();
+                alert('🚨 PUMP LOCKOUT!\n\nCannot start system - water tank level is too low (<20%).\nPlease refill the tank before starting.');
+                return;
+            }
+            
+            // Check for existing pump fault
+            if (pumpFault) {
+                alert('⚠️ PUMP FAULT DETECTED!\n\nPlease resolve the pump fault before starting the system.');
+                return;
+            }
+            
+            systemRunning = true;
+            systemStartTime = Date.now();
+            pumpLockout = false;
+            document.getElementById('systemStatus').className = 'status-indicator active';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            
+            // Reset counters
+            document.getElementById('runtime').textContent = '0';
+            document.getElementById('dailyUsage').textContent = '0';
+            
+            // Update pump status to Running
+            const pumpStatus = document.getElementById('pumpStatus');
+            if (pumpStatus) {
+                pumpStatus.innerHTML = 'Running';
+                pumpStatus.style.color = '#10b981';
+            }
+
+            // Clear any existing timer
+            if (systemTimer) clearInterval(systemTimer);
+
+            // Update runtime, usage, and tank level every second
+            systemTimer = setInterval(() => {
+                const elapsedSeconds = Math.floor((Date.now() - systemStartTime) / 1000);
+                const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+                const totalLiters = Math.round((elapsedSeconds * litersPerMinute) / 60);
+
+                const runtimeEl = document.getElementById('runtime');
+                const dailyUsageEl = document.getElementById('dailyUsage');
+
+                if (runtimeEl) runtimeEl.textContent = elapsedMinutes;
+                if (dailyUsageEl) dailyUsageEl.textContent = totalLiters;
+                
+                // Decrease tank level (500L capacity = 100%)
+                const tankCapacity = 500;
+                const remainingLiters = Math.max(0, tankCapacity - totalLiters);
+                currentTankLevel = Math.round((remainingLiters / tankCapacity) * 100);
+                
+                // Auto-stop system if tank level reaches 15%
+                if (currentTankLevel <= 15) {
+                    pumpLockout = true;
+                    setPumpFault();
+                    stopSystem();
+                    alert('🚨 SYSTEM AUTO-STOPPED!\n\nWater tank critically low (≤15%) - PUMP LOCKOUT ENGAGED.\nPlease refill the tank before restarting the system.');
+                    return;
+                }
+                
+                // Update tank display
+                const tankLevelEl = document.getElementById('tankLevel');
+                if (tankLevelEl) {
+                    tankLevelEl.textContent = currentTankLevel + '%';
+                    // Color coding: blue (full) > orange (mid) > red (low)
+                    if (currentTankLevel >= 65) {
+                        tankLevelEl.style.color = '#667eea';
+                    } else if (currentTankLevel >= 30) {
+                        tankLevelEl.style.color = '#f59e0b'; 
+                    } else {
+                        tankLevelEl.style.color = '#ef4444';
+                    }
+                }
+                
+                // Show alert when tank reaches 30%
+                if (currentTankLevel <= 30 && !lowTankAlertShown) {
+                    lowTankAlertShown = true;
+                    showLowTankAlert();
+                }
+                // Reset alert flag when tank is above 30%
+                if (currentTankLevel > 30) {
+                    lowTankAlertShown = false;
+                }
+            }, 1000);
+        }
+
+        // Stop system
+        function stopSystem() {
+            systemRunning = false;
+            if (systemTimer) {
+                clearInterval(systemTimer);
+                systemTimer = null;
+            }
+            systemStartTime = null;
+            document.getElementById('systemStatus').className = 'status-indicator inactive';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            
+            // Update pump status to Idle (unless there's a fault)
+            const pumpStatus = document.getElementById('pumpStatus');
+            if (pumpStatus && !pumpFault) {
+                pumpStatus.innerHTML = '⚪ Idle';
+                pumpStatus.style.color = '#667eea';
+            }
+            
+            updateTankLevel();
+        }
+
+        // Set pump fault status
+        function setPumpFault() {
+            pumpFault = true;
+            const pumpStatus = document.getElementById('pumpStatus');
+            if (pumpStatus) {
+                pumpStatus.innerHTML = '🔴 Fault';
+                pumpStatus.style.color = '#ef4444';
+            }
+            // Show clear fault button
+            const clearFaultBtn = document.getElementById('clearFaultBtn');
+            if (clearFaultBtn) {
+                clearFaultBtn.style.display = 'block';
+            }
+        }
+
+        // Clear pump fault
+        function clearPumpFault() {
+            if (currentTankLevel >= 20) {
+                pumpFault = false;
+                pumpLockout = false;
+                const pumpStatus = document.getElementById('pumpStatus');
+                if (pumpStatus && !systemRunning) {
+                    pumpStatus.innerHTML = '⚪ Idle';
+                    pumpStatus.style.color = '#667eea';
+                }
+                // Hide clear fault button
+                const clearFaultBtn = document.getElementById('clearFaultBtn');
+                if (clearFaultBtn) {
+                    clearFaultBtn.style.display = 'none';
+                }
+                alert('✅ Pump fault cleared. System is ready to start.');
+            } else {
+                alert('⚠️ Cannot clear fault - tank level still below 20%.');
+            }
+        }
+
+        // Show low tank alert
+        function showLowTankAlert() {
+            const alertDiv = document.getElementById('lowTankAlert');
+            if (alertDiv) {
+                alertDiv.style.display = 'block';
+                // Optional: show browser alert as well
+                alert('⚠️ WARNING: Water tank level is below 30%!\nPlease refill the tank soon.');
+            }
+        }
+
+        // Hide low tank alert
+        function hideLowTankAlert() {
+            const alertDiv = document.getElementById('lowTankAlert');
+            if (alertDiv) {
+                alertDiv.style.display = 'none';
+            }
+        }
+
+        // Save schedule
+        async function saveSchedule() {
+            const morningTime = document.getElementById('morningTime')?.value || '06:00';
+            const morningDuration = parseInt(document.getElementById('morningDuration')?.value || '30', 10);
+            const eveningTime = document.getElementById('eveningTime')?.value || '18:00';
+            const eveningDuration = parseInt(document.getElementById('eveningDuration')?.value || '30', 10);
+
+            if (!morningTime || morningDuration <= 0 || !eveningTime || eveningDuration <= 0) {
+                alert('⚠️ Please enter valid times and durations.');
+                return;
+            }
+
+            // Save to localStorage
+            const scheduleData = {
+                morning: { time: morningTime, duration: morningDuration },
+                evening: { time: eveningTime, duration: eveningDuration }
+            };
+            const userKey = currentUser?.id || currentUser?.username || 'guest';
+            localStorage.setItem('schedules:' + userKey, JSON.stringify(scheduleData));
+
+            // Update display with next scheduled run
+            updateNextScheduleDisplay(morningTime, morningDuration, eveningTime, eveningDuration);
+
+            // Show success message
+            alert('Schedule saved successfully! ✅\n\nYour irrigation times have been updated.');
+        }
+
+        function updateNextScheduleDisplay(morningTime, morningDuration, eveningTime, eveningDuration) {
+            updateScheduleDisplay(morningTime, morningDuration, 'morningScheduleDisplay');
+            updateScheduleDisplay(eveningTime, eveningDuration, 'eveningScheduleDisplay');
+        }
+        
+        function updateScheduleDisplay(time, duration, elementId) {
+            const displayEl = document.getElementById(elementId);
+            if (displayEl) {
+                const formattedTime = convert24to12(time);
+                const label = elementId === 'morningScheduleDisplay' ? 'Morning' : 'Evening';
+                displayEl.textContent = label + ': ' + formattedTime + ' for ' + duration + ' minutes';
+            }
+        }
+
+        function convert24to12(time24) {
+            const [hours, minutes] = time24.split(':');
+            let hour = parseInt(hours, 10);
+            const min = minutes;
+            const period = hour >= 12 ? 'PM' : 'AM';
+            
+            if (hour > 12) {
+                hour -= 12;
+            } else if (hour === 0) {
+                hour = 12;
+            }
+            
+            return hour + ':' + min + ' ' + period;
+        }
+
+        function loadSavedSchedules() {
+            const userKey = currentUser?.id || currentUser?.username || 'guest';
+            const stored = localStorage.getItem('schedules:' + userKey);
+            if (!stored) return;
+
+            try {
+                const data = JSON.parse(stored);
+                if (data.morning) {
+                    const morningTime = document.getElementById('morningTime');
+                    const morningDuration = document.getElementById('morningDuration');
+                    if (morningTime) morningTime.value = data.morning.time;
+                    if (morningDuration) morningDuration.value = data.morning.duration;
+                }
+                if (data.evening) {
+                    const eveningTime = document.getElementById('eveningTime');
+                    const eveningDuration = document.getElementById('eveningDuration');
+                    if (eveningTime) eveningTime.value = data.evening.time;
+                    if (eveningDuration) eveningDuration.value = data.evening.duration;
+                }
+                if (data.morning && data.evening) {
+                    updateNextScheduleDisplay(data.morning.time, data.morning.duration, data.evening.time, data.evening.duration);
+                }
+            } catch (error) { 
+                console.error('Error loading schedules:', error);
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            const usageEl = document.getElementById('dailyUsage');
+            const runtimeEl = document.getElementById('runtime');
+            if (usageEl) usageEl.textContent = dailyUsage;
+            if (runtimeEl) runtimeEl.textContent = runtime;
+        }
+
+        // Auto monitoring
+        function startAutoMonitoring() {
+            setInterval(async () => {
+                if (autoMode) {
+                    // Simulate moisture decrease
+                    zones.forEach(zone => {
+                        if (zone.enabled && zone.moisture_level > 0) {
+                            zone.moisture_level -= Math.random() * 0.5;
+                            if (zone.moisture_level < 0) zone.moisture_level = 0;
+                        }
+                    });
+                    updateZoneMoisture();
+                    
+                    // Update sensor data periodically
+                    await loadSensorData();
+                }
+            }, 3000);
+        }
+
+        // Logout
+        async function handleLogout() {
+            try {
+                closeMobileMenu(); // Close mobile menu if open
+                closeUserDropdown(); // Close user dropdown if open
+                await fetch(API_BASE + 'auth.php?action=logout');
+                document.getElementById('authSection').style.display = 'flex';
+                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('regUsername').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                location.reload();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard().catch(() => {
+                document.getElementById('authSection').style.display = 'flex';
+            });
+        });
+    </script>
+</body>
+</html>
