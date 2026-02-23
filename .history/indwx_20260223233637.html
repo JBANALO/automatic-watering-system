@@ -2221,32 +2221,21 @@
         // Handle Google Sign In
         async function handleGoogleSignIn() {
             try {
-                // Use the OAuth 2.0 implicit flow
-                const clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-                const redirectUri = window.location.origin + window.location.pathname;
-                
-                // For development/testing, we'll use a simple approach
-                // In production, you should implement proper OAuth flow
-                if (clientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
-                    showError('Please configure Google OAuth Client ID in the code first!');
-                    return;
-                }
+                // Initialize Google Sign-In if not already done
+                google.accounts.id.initialize({
+                    client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+                    callback: handleCredentialResponse
+                });
 
-                // Initialize if needed
-                if (typeof google !== 'undefined' && google.accounts) {
-                    // Trigger One Tap or render sign-in button
-                    google.accounts.id.prompt((notification) => {
-                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                            // Fallback to explicit button render
-                            attemptGoogleLoginWithPopup();
-                        }
-                    });
-                } else {
-                    showError('Google Sign-In library not loaded. Please refresh the page.');
-                }
+                // Trigger the One Tap or Sign-In flow
+                google.accounts.id.renderButton(
+                    document.getElementById('googleSignInButton'),
+                    { theme: 'outline', size: 'large', width: '100%' }
+                );
             } catch (error) {
-                console.error('Google Sign-In error:', error);
-                showError('Error initiating Google sign-in: ' + error.message);
+                console.error('Google Sign-In initialization error:', error);
+                // Fallback: Create a simple login attempt
+                attemptGoogleLogin();
             }
         }
 
@@ -2254,33 +2243,6 @@
         async function handleGoogleSignUp() {
             // Same as sign in - Google authentication works for both
             handleGoogleSignIn();
-        }
-
-        // Attempt Google login with popup
-        async function attemptGoogleLoginWithPopup() {
-            try {
-                const clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-                const redirectUri = window.location.origin + window.location.pathname;
-                const scope = 'openid%20email%20profile';
-                
-                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-                    `client_id=${clientId}` +
-                    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-                    `&response_type=id_token` +
-                    `&scope=${scope}` +
-                    `&nonce=${generateNonce()}`;
-                
-                window.location.href = authUrl;
-            } catch (error) {
-                console.error('Popup login error:', error);
-                showError('Unable to open Google sign-in');
-            }
-        }
-
-        // Generate nonce for security
-        function generateNonce() {
-            return Math.random().toString(36).substring(2, 15) + 
-                   Math.random().toString(36).substring(2, 15);
         }
 
         // Process Google credential response
@@ -2307,7 +2269,7 @@
                 };
 
                 // Send to backend
-                const authResponse = await fetch(API_BASE + 'auth.php?action=google-login', {
+                const response2 = await fetch(API_BASE + 'auth.php?action=google-login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -2316,7 +2278,7 @@
                     })
                 });
 
-                const data = await authResponse.json();
+                const data = await response2.json();
                 if (data.status === 'success') {
                     showSuccess('Welcome ' + (googleUserData.firstName || 'User') + '!');
                     setTimeout(() => loadDashboard(), 1000);
@@ -2326,6 +2288,25 @@
             } catch (error) {
                 console.error('Credential response error:', error);
                 showError('Error processing Google sign-in: ' + error.message);
+            }
+        }
+
+        // Fallback function for simple Google login
+        async function attemptGoogleLogin() {
+            try {
+                // Open Google OAuth consent screen
+                const clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+                const redirectUri = window.location.origin + window.location.pathname;
+                const scope = 'openid email profile';
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${clientId}` +
+                    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                    `&response_type=token` +
+                    `&scope=${encodeURIComponent(scope)}`;
+                
+                window.location.href = authUrl;
+            } catch (error) {
+                showError('Please configure Google OAuth Client ID first');
             }
         }
 

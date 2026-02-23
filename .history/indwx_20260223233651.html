@@ -2283,52 +2283,6 @@
                    Math.random().toString(36).substring(2, 15);
         }
 
-        // Process Google credential response
-        async function handleCredentialResponse(response) {
-            try {
-                const token = response.credential;
-                
-                // Decode the JWT token (the payload is the second part)
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-
-                const userData = JSON.parse(jsonPayload);
-
-                // Extract user information
-                const googleUserData = {
-                    id: userData.sub,
-                    email: userData.email,
-                    firstName: userData.given_name || userData.name,
-                    lastName: userData.family_name || '',
-                    picture: userData.picture
-                };
-
-                // Send to backend
-                const authResponse = await fetch(API_BASE + 'auth.php?action=google-login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        token: token,
-                        userData: googleUserData
-                    })
-                });
-
-                const data = await authResponse.json();
-                if (data.status === 'success') {
-                    showSuccess('Welcome ' + (googleUserData.firstName || 'User') + '!');
-                    setTimeout(() => loadDashboard(), 1000);
-                } else {
-                    showError('Google authentication failed: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Credential response error:', error);
-                showError('Error processing Google sign-in: ' + error.message);
-            }
-        }
-
         // Toggle between login and forgot password forms
         function toggleForgotPasswordForm() {
             const loginForm = document.getElementById('loginForm');

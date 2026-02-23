@@ -2077,36 +2077,6 @@
             }, 5000);
         }
 
-        function showSuccess(message) {
-            // Show success message (you can customize this)
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            errorDiv.style.color = '#34A853'; // Google green
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-                errorDiv.style.color = 'red'; // Reset to default
-            }, 5000);
-        }
-
-        // Initialize Google Sign-In on page load
-        function initializeGoogleSignIn() {
-            if (typeof google !== 'undefined' && google.accounts) {
-                try {
-                    google.accounts.id.initialize({
-                        client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-                        callback: handleCredentialResponse
-                    });
-                    console.log('Google Sign-In initialized');
-                } catch (error) {
-                    console.error('Google Sign-In initialization error:', error);
-                }
-            }
-        }
-
-        // Call initialization when page loads
-        window.addEventListener('load', initializeGoogleSignIn);
-
         // Toggle between login and register forms
         function toggleForm() {
             document.getElementById('loginForm').style.display = 
@@ -2220,112 +2190,84 @@
 
         // Handle Google Sign In
         async function handleGoogleSignIn() {
+            // In a real application, you would use Google OAuth
+            // For now, we'll create a demo account
+            const demoUsername = 'google_user_' + Math.random().toString(36).substr(2, 9);
+            const demoPassword = 'google_oauth_token';
+            
             try {
-                // Use the OAuth 2.0 implicit flow
-                const clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-                const redirectUri = window.location.origin + window.location.pathname;
-                
-                // For development/testing, we'll use a simple approach
-                // In production, you should implement proper OAuth flow
-                if (clientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
-                    showError('Please configure Google OAuth Client ID in the code first!');
-                    return;
-                }
+                const response = await fetch(API_BASE + 'auth.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: demoUsername, password: demoPassword })
+                });
 
-                // Initialize if needed
-                if (typeof google !== 'undefined' && google.accounts) {
-                    // Trigger One Tap or render sign-in button
-                    google.accounts.id.prompt((notification) => {
-                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                            // Fallback to explicit button render
-                            attemptGoogleLoginWithPopup();
-                        }
-                    });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    await loadDashboard();
                 } else {
-                    showError('Google Sign-In library not loaded. Please refresh the page.');
+                    // If user doesn't exist, create them
+                    const registerResponse = await fetch(API_BASE + 'auth.php?action=register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            username: demoUsername, 
+                            email: demoUsername + '@google.com',
+                            password: demoPassword 
+                        })
+                    });
+
+                    const registerData = await registerResponse.json();
+                    if (registerData.status === 'success') {
+                        await loadDashboard();
+                    } else {
+                        showError('Google sign in failed: ' + registerData.message);
+                    }
                 }
             } catch (error) {
-                console.error('Google Sign-In error:', error);
-                showError('Error initiating Google sign-in: ' + error.message);
+                showError('Google sign in error: ' + error.message);
             }
         }
 
         // Handle Google Sign Up
         async function handleGoogleSignUp() {
-            // Same as sign in - Google authentication works for both
-            handleGoogleSignIn();
-        }
-
-        // Attempt Google login with popup
-        async function attemptGoogleLoginWithPopup() {
+            // In a real application, you would use Google OAuth
+            // For now, we'll create a demo account
+            const demoUsername = 'google_user_' + Math.random().toString(36).substr(2, 9);
+            const demoPassword = 'google_oauth_token';
+            
             try {
-                const clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-                const redirectUri = window.location.origin + window.location.pathname;
-                const scope = 'openid%20email%20profile';
-                
-                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-                    `client_id=${clientId}` +
-                    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-                    `&response_type=id_token` +
-                    `&scope=${scope}` +
-                    `&nonce=${generateNonce()}`;
-                
-                window.location.href = authUrl;
-            } catch (error) {
-                console.error('Popup login error:', error);
-                showError('Unable to open Google sign-in');
-            }
-        }
-
-        // Generate nonce for security
-        function generateNonce() {
-            return Math.random().toString(36).substring(2, 15) + 
-                   Math.random().toString(36).substring(2, 15);
-        }
-
-        // Process Google credential response
-        async function handleCredentialResponse(response) {
-            try {
-                const token = response.credential;
-                
-                // Decode the JWT token (the payload is the second part)
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-
-                const userData = JSON.parse(jsonPayload);
-
-                // Extract user information
-                const googleUserData = {
-                    id: userData.sub,
-                    email: userData.email,
-                    firstName: userData.given_name || userData.name,
-                    lastName: userData.family_name || '',
-                    picture: userData.picture
-                };
-
-                // Send to backend
-                const authResponse = await fetch(API_BASE + 'auth.php?action=google-login', {
+                const registerResponse = await fetch(API_BASE + 'auth.php?action=register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        token: token,
-                        userData: googleUserData
+                        username: demoUsername, 
+                        email: demoUsername + '@google.com',
+                        password: demoPassword 
                     })
                 });
 
-                const data = await authResponse.json();
-                if (data.status === 'success') {
-                    showSuccess('Welcome ' + (googleUserData.firstName || 'User') + '!');
-                    setTimeout(() => loadDashboard(), 1000);
+                const registerData = await registerResponse.json();
+                if (registerData.status === 'success') {
+                    showError('Account created! Logging you in...');
+                    setTimeout(() => handleGoogleSignIn(), 1500);
                 } else {
-                    showError('Google authentication failed: ' + data.message);
+                    // Account might already exist, try to login
+                    const loginResponse = await fetch(API_BASE + 'auth.php?action=login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: demoUsername, password: demoPassword })
+                    });
+
+                    const loginData = await loginResponse.json();
+                    if (loginData.status === 'success') {
+                        await loadDashboard();
+                    } else {
+                        showError('Google sign up failed: ' + registerData.message);
+                    }
                 }
             } catch (error) {
-                console.error('Credential response error:', error);
-                showError('Error processing Google sign-in: ' + error.message);
+                showError('Google sign up error: ' + error.message);
             }
         }
 
