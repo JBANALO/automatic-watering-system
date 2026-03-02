@@ -86,6 +86,35 @@ CREATE TABLE IF NOT EXISTS system_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS devices (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    device_id VARCHAR(100) UNIQUE NOT NULL,
+    api_key VARCHAR(255) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    zone_id INT,
+    device_name VARCHAR(100),
+    device_type VARCHAR(50) DEFAULT 'ESP32',
+    status ENUM('active', 'inactive', 'error') DEFAULT 'inactive',
+    last_seen TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (zone_id) REFERENCES zones(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS commands (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    zone_id INT NOT NULL,
+    device_id INT,
+    command_type ENUM('turn_on', 'turn_off', 'auto_mode', 'set_duration') NOT NULL,
+    params JSON,
+    status ENUM('pending', 'sent', 'executed', 'failed') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sent_at TIMESTAMP NULL,
+    executed_at TIMESTAMP NULL,
+    FOREIGN KEY (zone_id) REFERENCES zones(id) ON DELETE CASCADE,
+    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL
+);
 ";
 
 if (!$conn->multi_query($tables)) {

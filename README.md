@@ -254,14 +254,45 @@ For issues or questions:
 3. Check server error logs in XAMPP
 4. Verify all files are in correct locations
 
+## � Hardware Integration (ESP32)
+
+**NEW!** Full ESP32 hardware support is now integrated into the backend!
+
+### Quick Start with ESP32
+1. **Register your device**: Use the web interface or API to get an API key
+2. **Upload Arduino sketch**: Flash `ESP32_Client.ino` to your ESP32
+3. **Configure WiFi & API key**: Update credentials in the sketch
+4. **Connect sensors**: Wire up moisture, temperature, and pump relay
+5. **Start monitoring**: Real-time sensor data flows to your dashboard
+
+### Documentation
+- 📘 [HARDWARE_INTEGRATION.md](HARDWARE_INTEGRATION.md) - Complete ESP32 setup guide
+- 🧪 [hardware_test.html](hardware_test.html) - Browser-based API testing tool
+- 💻 [ESP32_Client.ino](ESP32_Client.ino) - Arduino sketch for ESP32
+
+### Supported Features
+- ✅ Real-time sensor data submission (moisture, temp, humidity, tank level)
+- ✅ Remote pump control via web interface
+- ✅ Command queue system (web → ESP32)
+- ✅ Device health monitoring (last seen status)
+- ✅ Multi-device support (multiple zones)
+- ✅ Automatic watering based on sensor readings
+
+### API Endpoints
+- `POST /api/hardware.php?action=submit` - Submit sensor data
+- `GET /api/device_control.php?action=poll` - Poll for commands
+- `POST /api/device_register.php?action=register` - Register new device
+
 ## 📝 Future Enhancements
 
 Potential improvements for version 2.0:
-- Real IoT device integration
+- ~~Real IoT device integration~~ ✅ **COMPLETED**
 - Mobile app (iOS/Android)
-- Weather API integration
+- Weather API integration (OpenWeather)
 - Advanced analytics and reporting
-- Push notifications
+- Push notifications (email/SMS)
+- MQTT support for real-time updates
+- Battery monitoring for solar-powered setups
 - Two-factor authentication
 - Database backup/restore functionality
 - Multi-language support
@@ -290,6 +321,6 @@ curl -X POST http://localhost/automatic-watering-system/api/auth.php?action=logi
 
 ---
 
-**Version:** 1.0  
-**Last Updated:** February 8, 2026  
-**Status:** Fully Functional with Backend Integration
+**Version:** 2.0 - Hardware Integration Edition  
+**Last Updated:** February 25, 2026  
+**Status:** Fully Functional with ESP32 Hardware Support ✅

@@ -89,7 +89,20 @@ function toggleZone($user_id, $conn) {
     $sql = "UPDATE zones SET enabled=$enabled_val WHERE id=$zone_id";
     
     if ($conn->query($sql)) {
-        echo json_encode(['status' => 'success', 'message' => 'Zone toggled', 'enabled' => $enabled]);
+        // Queue command for hardware devices
+        $command_type = $enabled ? 'turn_on' : 'turn_off';
+        $params = json_encode(['source' => 'web_interface']);
+        
+        $cmd_stmt = $conn->prepare("INSERT INTO commands (zone_id, command_type, params) VALUES (?, ?, ?)");
+        $cmd_stmt->bind_param("iss", $zone_id, $command_type, $params);
+        $cmd_stmt->execute();
+        
+        echo json_encode([
+            'status' => 'success', 
+            'message' => 'Zone toggled', 
+            'enabled' => $enabled,
+            'command_queued' => true
+        ]);
     } else {
         http_response_code(500);
         echo json_encode(['status' => 'error', 'message' => 'Toggle failed']);
