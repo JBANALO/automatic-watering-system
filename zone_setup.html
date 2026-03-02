@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Zone Setup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .result {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .success {
+            color: #4caf50;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .error {
+            color: #f44336;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .info-box p {
+            color: #555;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .device-item {
+            background: #e8eaf6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .next-step {
+            background: #4caf50;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .next-step h3 {
+            margin-bottom: 10px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        .spinner.show {
+            display: block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Quick Zone Setup</h1>
+        <p class="subtitle">Automatically create a zone and assign your devices</p>
+        
+        <button onclick="setupZone()" id="setupBtn">🚀 Create Zone & Assign Devices</button>
+        
+        <div class="spinner" id="spinner"></div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        async function setupZone() {
+            const btn = document.getElementById('setupBtn');
+            const spinner = document.getElementById('spinner');
+            const result = document.getElementById('result');
+            
+            // Show loading
+            btn.disabled = true;
+            btn.textContent = 'Setting up...';
+            spinner.classList.add('show');
+            result.classList.remove('show');
+            
+            try {
+                const response = await fetch('quick_zone_setup.php');
+                const data = await response.json();
+                
+                spinner.classList.remove('show');
+                result.classList.add('show');
+                
+                if (data.status === 'success') {
+                    result.innerHTML = `
+                        <div class="success">✅ ${data.message}</div>
+                        
+                        <div class="info-box">
+                            <h3>📍 Zone Created</h3>
+                            <p><strong>Zone ID:</strong> ${data.zone.id}</p>
+                            <p><strong>Zone Name:</strong> ${data.zone.name}</p>
+                            <p><strong>Status:</strong> ${data.zone.created_new ? 'Newly created' : 'Using existing zone'}</p>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h3>🔌 Devices Assigned</h3>
+                            <p><strong>Total:</strong> ${data.devices_assigned} device(s)</p>
+                            ${data.devices.map(d => `
+                                <div class="device-item">
+                                    📱 ${d.device_name} (${d.device_id})
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="next-step">
+                            <h3>🎉 All Set!</h3>
+                            <p>Go back to <strong>hardware_test.html</strong> and try <strong>"Submit Data"</strong> again!</p>
+                            <p style="margin-top: 10px; font-size: 12px;">Your device is now assigned to Zone ${data.zone.id}</p>
+                        </div>
+                    `;
+                    
+                    btn.textContent = '✅ Setup Complete!';
+                    btn.style.background = '#4caf50';
+                    
+                } else {
+                    result.innerHTML = `
+                        <div class="error">❌ ${data.message}</div>
+                        <div class="info-box">
+                            <p>Make sure you're logged in to <strong>indwx.html</strong> first!</p>
+                            <p style="margin-top: 10px;">
+                                <a href="indwx.html" style="color: #667eea;">Click here to login</a>
+                            </p>
+                        </div>
+                    `;
+                    
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Try Again';
+                }
+                
+            } catch (error) {
+                spinner.classList.remove('show');
+                result.classList.add('show');
+                result.innerHTML = `
+                    <div class="error">❌ Connection Error</div>
+                    <div class="info-box">
+                        <p>${error.message}</p>
+                        <p style="margin-top: 10px;">Make sure XAMPP Apache and MySQL are running.</p>
+                    </div>
+                `;
+                
+                btn.disabled = false;
+                btn.textContent = '🔄 Try Again';
+            }
+        }
+    </script>
+</body>
+</html>

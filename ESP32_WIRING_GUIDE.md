@@ -1,0 +1,252 @@
+# 🔌 ESP32 Wiring Guide - Automatic Watering System
+
+## 📦 Your Components:
+- ✅ ESP32-WROOM-32 (38 pins)
+- ✅ DHT11 Temperature/Humidity Sensor
+- ✅ Soil Moisture Sensor
+- ✅ Water Level Detection Sensor
+- ✅ Active Buzzer (for alerts)
+- ✅ LEDs (Red, Yellow, Green)
+- 🟡 **NEED TO BUY**: 5V Relay Module (₱50-150)
+- 🟡 **COMING**: Water Pump + Sprinkler
+
+---
+
+## 🔧 STEP 1: ESP32 Pinout Reference
+
+```
+ESP32-WROOM-32 (38 PIN) Layout:
+
+LEFT SIDE (from top):          RIGHT SIDE (from top):
+GND                            VIN (5V input)
+3V3 (3.3V output)              GND
+EN                             GPIO23
+GPIO36 (VP)                    GPIO22
+GPIO39 (VN)                    GPIO1 (TX)
+GPIO34 (INPUT ONLY)            GPIO3 (RX)
+GPIO35 (INPUT ONLY)            GPIO21
+GPIO32                         GND
+GPIO33                         GPIO19
+GPIO25                         GPIO18
+GPIO26                         GPIO5
+GPIO27                         GPIO17
+GPIO14                         GPIO16
+GPIO12                         GPIO4
+GND                            GPIO0
+GPIO13                         GPIO2
+GPIO9 (FLASH)                  GPIO15
+GPIO10 (FLASH)                 GND
+GPIO11 (FLASH)                 GND
+```
+
+---
+
+## 🌡️ STEP 2: DHT11 Wiring (Temperature & Humidity)
+
+```
+DHT11 Sensor -> ESP32
+─────────────────────
+VCC/+     ->  3V3
+DATA/OUT  ->  GPIO4
+GND/-     ->  GND
+```
+
+**Notes:**
+- 3-pin DHT11: VCC, DATA, GND
+- Keep wire short (< 20cm) for stable readings
+
+---
+
+## 🌱 STEP 3: Soil Moisture Sensor Wiring
+
+```
+Soil Moisture -> ESP32
+──────────────────────
+VCC   ->  3V3
+GND   ->  GND
+A0    ->  GPIO34 (Analog input)
+```
+
+**Notes:**
+- GPIO34 is **INPUT ONLY** - perfect for analog sensors
+- Insert probe into soil (avoid touching metal parts)
+
+---
+
+## 💧 STEP 4: Water Level Sensor Wiring
+
+```
+Water Level Sensor -> ESP32
+────────────────────────────
+VCC/+   ->  3V3
+GND/-   ->  GND
+S/OUT   ->  GPIO35 (Analog input)
+```
+
+**Notes:**
+- GPIO35 is **INPUT ONLY** - perfect for analog sensors
+- Place sensor vertically in water tank
+
+---
+
+## 🔔 STEP 5: Active Buzzer Wiring (Alert)
+
+```
+Active Buzzer -> ESP32
+──────────────────────
+VCC/+   ->  3V3
+GND/-   ->  GND
+I/O     ->  GPIO23
+```
+
+**Notes:**
+- Active buzzer: just apply voltage, it beeps
+- Use for alerts (low water, pump errors)
+
+---
+
+## 💡 STEP 6: Status LEDs Wiring (Optional)
+
+### Red LED (Error/Alert):
+```
+Red LED -> ESP32
+────────────────
+Long leg (+)  ->  GPIO25 -> 220Ω resistor -> LED -> GND
+Short leg (-) ->  GND
+```
+
+### Yellow LED (Processing):
+```
+Yellow LED -> ESP32
+───────────────────
+GPIO26 -> 220Ω resistor -> LED -> GND
+```
+
+### Green LED (System OK):
+```
+Green LED -> ESP32
+──────────────────
+GPIO27 -> 220Ω resistor -> LED -> GND
+```
+
+**Notes:**
+- Always use resistor (220Ω or 330Ω) with LEDs
+- Long leg = positive (+), short leg = negative (-)
+
+---
+
+## 🔌 STEP 7: Relay Module Wiring (NEED TO BUY)
+
+**IMPORTANTE: Kailangan bumili muna ng Relay Module!**
+
+```
+5V Relay Module -> ESP32 & Pump
+────────────────────────────────
+VCC    ->  VIN (5V)
+GND    ->  GND
+IN     ->  GPIO5
+COM    ->  Pump VCC (from power supply)
+NO     ->  Pump GND (normally open contact)
+```
+
+**Recommended Relay:**
+- 5V 1-Channel Relay Module
+- Shopee/Lazada: ₱50-150
+- Brand: Keyes, SainSmart, or generic
+
+---
+
+## 📋 COMPLETE WIRING SUMMARY
+
+| Component | VCC/+ | GND/- | Signal | ESP32 Pin |
+|-----------|-------|-------|--------|-----------|
+| **DHT11** | 3V3 | GND | DATA | GPIO4 |
+| **Soil Moisture** | 3V3 | GND | A0 | GPIO34 |
+| **Water Level** | 3V3 | GND | S/OUT | GPIO35 |
+| **Buzzer** | 3V3 | GND | I/O | GPIO23 |
+| **Red LED** | GPIO25 | GND | (with 220Ω) | - |
+| **Yellow LED** | GPIO26 | GND | (with 220Ω) | - |
+| **Green LED** | GPIO27 | GND | (with 220Ω) | - |
+| **Relay** | VIN(5V) | GND | IN | GPIO5 |
+
+---
+
+## ⚠️ IMPORTANT SAFETY TIPS:
+
+1. **Power Off First**: Disconnect ESP32 from USB before wiring
+2. **Check Polarity**: VCC to 3V3/VIN, GND to GND (wrong = damage!)
+3. **Use Resistors**: Always use resistors with LEDs
+4. **Analog Pins**: GPIO34, 35, 36, 39 are INPUT ONLY (for sensors)
+5. **Double Check**: Verify all connections before powering on
+
+---
+
+## 🔍 TESTING CHECKLIST:
+
+After wiring, before uploading code:
+- [ ] All VCC pins connected to 3V3 or VIN
+- [ ] All GND pins connected to GND
+- [ ] No short circuits (wires not touching)
+- [ ] Sensors firmly in breadboard
+- [ ] LEDs have resistors
+- [ ] Correct GPIO pins used
+
+---
+
+## 🚀 NEXT: Upload Arduino Code
+
+Once wiring is complete:
+1. Open Arduino IDE
+2. Install libraries (DHT, HTTPClient, ArduinoJson)
+3. Open ESP32_Client.ino
+4. Update WiFi & API key
+5. Upload to ESP32
+6. Open Serial Monitor (115200 baud)
+
+---
+
+## 📸 BREADBOARD LAYOUT EXAMPLE:
+
+```
+┌─────────────────────────────────────────┐
+│         BREADBOARD LAYOUT               │
+│                                         │
+│  [ESP32]                                │
+│    ││││                                 │
+│   3V3 GND                               │
+│    │   │                                │
+│    ├───┼──[DHT11]                       │
+│    │   │                                │
+│    ├───┼──[Soil Sensor]                 │
+│    │   │                                │
+│    ├───┼──[Water Level]                 │
+│    │   │                                │
+│    ├───┼──[Buzzer]                      │
+│    │   │                                │
+│    └───┴──[LEDs with resistors]         │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## ❓ Troubleshooting:
+
+**ESP32 not detected?**
+- Install CP2102 or CH340 USB driver
+- Try different USB cable
+- Press BOOT button while uploading
+
+**Sensor readings always 0?**
+- Check VCC and GND connections
+- Verify correct GPIO pin
+- Test with multimeter
+
+**WiFi not connecting?**
+- Check SSID and password spelling
+- Move closer to router
+- Use 2.4GHz WiFi (not 5GHz)
+
+---
+
+Need help? Ask me after wiring! 🚀

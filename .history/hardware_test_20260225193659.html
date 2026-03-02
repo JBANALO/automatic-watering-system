@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Hardware API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 15px;
+        }
+        
+        .success { color: #00ff00 !important; }
+        .error { color: #ff4444 !important; }
+        .info { color: #4fc3f7 !important; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .badge-success { background: #4caf50; color: white; }
+        .badge-error { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 ESP32 Hardware API Tester</h1>
+        <p class="subtitle">Test backend APIs without real hardware</p>
+        
+        <!-- Device Registration -->
+        <div class="section">
+            <h2>1️⃣ Register Device (Login Required)</h2>
+            <div class="input-group">
+                <label>Device Name</label>
+                <input type="text" id="deviceName" value="Test ESP32" placeholder="Garden ESP32">
+            </div>
+            <div class="input-group">
+                <label>Zone ID (0 = Unassigned, or enter existing zone ID)</label>
+                <input type="number" id="zoneId" value="0" placeholder="0 for unassigned">
+            </div>
+            <button onclick="registerDevice()">Register Device</button>
+            <div class="output" id="registerOutput">Click "Register Device" to create a new device...</div>
+        </div>
+        
+        <!-- API Key Input -->
+        <div class="section">
+            <h2>2️⃣ Device API Key</h2>
+            <div class="input-group">
+                <label>API Key (Copy from registration output above)</label>
+                <input type="text" id="apiKey" placeholder="Paste your 64-character API key here">
+            </div>
+            <button onclick="testPing()">Test Connection</button>
+            <button onclick="getDeviceInfo()">Get Device Info</button>
+            <div class="output" id="apiKeyOutput">Paste your API key and test connection...</div>
+        </div>
+        
+        <!-- Submit Sensor Data -->
+        <div class="section">
+            <h2>3️⃣ Submit Sensor Data</h2>
+            <div class="grid">
+                <div class="input-group">
+                    <label>Moisture (%)</label>
+                    <input type="number" id="moisture" value="45" min="0" max="100">
+                </div>
+                <div class="input-group">
+                    <label>Temperature (°C)</label>
+                    <input type="number" id="temperature" value="25.5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Humidity (%)</label>
+                    <input type="number" id="humidity" value="60" min="0" max="100">
+                </div>
+                <div class="input-group">
+                    <label>Tank Level (%)</label>
+                    <input type="number" id="tankLevel" value="87" min="0" max="100">
+                </div>
+            </div>
+            <button onclick="submitSensorData()">Submit Data</button>
+            <button onclick="autoSubmit()">Auto Submit (10s)</button>
+            <button onclick="stopAutoSubmit()">Stop Auto</button>
+            <div class="output" id="sensorOutput">Ready to submit sensor data...</div>
+        </div>
+        
+        <!-- Poll Commands -->
+        <div class="section">
+            <h2>4️⃣ Poll for Commands</h2>
+            <button onclick="pollCommands()">Poll Once</button>
+            <button onclick="startAutoPoll()">Auto Poll (5s)</button>
+            <button onclick="stopAutoPoll()">Stop Auto</button>
+            <div class="output" id="commandOutput">Click "Poll Once" to check for pending commands...</div>
+        </div>
+        
+        <!-- List Devices -->
+        <div class="section">
+            <h2>5️⃣ Device Management (Login Required)</h2>
+            <button onclick="listDevices()">List All Devices</button>
+            <button onclick="clearOutput('devicesOutput')">Clear</button>
+            <div class="output" id="devicesOutput">Click "List All Devices" to view registered devices...</div>
+        </div>
+    </div>
+
+    <script>
+        let autoSubmitInterval = null;
+        let autoPollInterval = null;
+        
+        const API_BASE = '/automatic-watering-system/api';
+        
+        function log(elementId, message, type = 'info') {
+            const output = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff4444' : type === 'success' ? '#00ff00' : '#4fc3f7';
+            output.innerHTML += `<span style="color:${color}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+        
+        // 1. Register Device
+        async function registerDevice() {
+            clearOutput('registerOutput');
+            const deviceName = document.getElementById('deviceName').value;
+            const zoneId = parseInt(document.getElementById('zoneId').value);
+            
+            try {
+                log('registerOutput', 'Registering device...', 'info');
+                const response = await fetch(`${API_BASE}/device_register.php?action=register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({device_name: deviceName, zone_id: zoneId})
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    log('registerOutput', '✅ Device registered successfully!', 'success');
+                    log('registerOutput', `Device ID: ${data.device.device_id}`, 'info');
+                    log('registerOutput', `API Key: ${data.device.api_key}`, 'info');
+                    log('registerOutput', '\n⚠️ COPY THE API KEY ABOVE AND PASTE IN SECTION 2!', 'info');
+                    document.getElementById('apiKey').value = data.device.api_key;
+                } else {
+                    log('registerOutput', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                log('registerOutput', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        // 2. Test Ping
+        async function testPing() {
+            clearOutput('apiKeyOutput');
+            const apiKey = document.getElementById('apiKey').value;
+            
+            if (!apiKey) {
+                log('apiKeyOutput', '❌ Please enter API key first!', 'error');
+                return;
+            }
+            
+            try {
+                log('apiKeyOutput', 'Testing connection...', 'info');
+                const response = await fetch(`${API_BASE}/hardware.php?action=ping`, {
+                    headers: {'X-API-Key': apiKey}
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    log('apiKeyOutput', '✅ Connection successful!', 'success');
+                    log('apiKeyOutput', `Server time: ${data.server_time}`, 'info');
+                } else {
+                    log('apiKeyOutput', `❌ ${data.message}`, 'error');
+                }
+            } catch (error) {
+                log('apiKeyOutput', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Get Device Info
+        async function getDeviceInfo() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/hardware.php?action=info`, {
+                    headers: {'X-API-Key': apiKey}
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    log('apiKeyOutput', '📋 Device Info:', 'info');
+                    log('apiKeyOutput', JSON.stringify(data, null, 2), 'success');
+                }
+            } catch (error) {
+                log('apiKeyOutput', `❌ ${error.message}`, 'error');
+            }
+        }
+        
+        // 3. Submit Sensor Data
+        async function submitSensorData() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                log('sensorOutput', '❌ Please enter API key first!', 'error');
+                return;
+            }
+            
+            const sensorData = {
+                moisture: parseInt(document.getElementById('moisture').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                humidity: parseInt(document.getElementById('humidity').value),
+                rainfall: 0,
+                tank_level: parseInt(document.getElementById('tankLevel').value)
+            };
+            
+            try {
+                log('sensorOutput', `Submitting: ${JSON.stringify(sensorData)}`, 'info');
+                const response = await fetch(`${API_BASE}/hardware.php?action=submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify(sensorData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    log('sensorOutput', `✅ ${data.message} (Zone: ${data.zone_id})`, 'success');
+                } else {
+                    log('sensorOutput', `❌ ${data.message}`, 'error');
+                }
+            } catch (error) {
+                log('sensorOutput', `❌ ${error.message}`, 'error');
+            }
+        }
+        
+        function autoSubmit() {
+            if (autoSubmitInterval) return;
+            log('sensorOutput', '🔄 Auto-submit started (every 10 seconds)', 'info');
+            autoSubmitInterval = setInterval(submitSensorData, 10000);
+        }
+        
+        function stopAutoSubmit() {
+            if (autoSubmitInterval) {
+                clearInterval(autoSubmitInterval);
+                autoSubmitInterval = null;
+                log('sensorOutput', '⏸️ Auto-submit stopped', 'info');
+            }
+        }
+        
+        // 4. Poll Commands
+        async function pollCommands() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                log('commandOutput', '❌ Please enter API key first!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/device_control.php?action=poll`, {
+                    headers: {'X-API-Key': apiKey}
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (data.count > 0) {
+                        log('commandOutput', `📨 Received ${data.count} command(s):`, 'success');
+                        data.commands.forEach(cmd => {
+                            log('commandOutput', `  → ${cmd.action} (ID: ${cmd.command_id})`, 'info');
+                            acknowledgeCommand(cmd.command_id);
+                        });
+                    } else {
+                        log('commandOutput', '📭 No pending commands', 'info');
+                    }
+                }
+            } catch (error) {
+                log('commandOutput', `❌ ${error.message}`, 'error');
+            }
+        }
+        
+        async function acknowledgeCommand(commandId) {
+            const apiKey = document.getElementById('apiKey').value;
+            
+            try {
+                await fetch(`${API_BASE}/device_control.php?action=acknowledge`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({command_id: commandId, status: 'executed'})
+                });
+                log('commandOutput', `  ✅ Acknowledged command ${commandId}`, 'success');
+            } catch (error) {
+                log('commandOutput', `  ❌ Failed to acknowledge: ${error.message}`, 'error');
+            }
+        }
+        
+        function startAutoPoll() {
+            if (autoPollInterval) return;
+            log('commandOutput', '🔄 Auto-poll started (every 5 seconds)', 'info');
+            autoPollInterval = setInterval(pollCommands, 5000);
+        }
+        
+        function stopAutoPoll() {
+            if (autoPollInterval) {
+                clearInterval(autoPollInterval);
+                autoPollInterval = null;
+                log('commandOutput', '⏸️ Auto-poll stopped', 'info');
+            }
+        }
+        
+        // 5. List Devices
+        async function listDevices() {
+            clearOutput('devicesOutput');
+            try {
+                log('devicesOutput', 'Fetching devices...', 'info');
+                const response = await fetch(`${API_BASE}/device_register.php?action=list`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    log('devicesOutput', `✅ Found ${data.devices.length} device(s):\n`, 'success');
+                    data.devices.forEach(device => {
+                        log('devicesOutput', `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'info');
+                        log('devicesOutput', `Device: ${device.device_name}`, 'info');
+                        log('devicesOutput', `ID: ${device.device_id}`, 'info');
+                        log('devicesOutput', `Zone: ${device.zone_name || 'Unassigned'}`, 'info');
+                        log('devicesOutput', `Status: ${device.status}`, device.status === 'active' ? 'success' : 'error');
+                        log('devicesOutput', `Last Seen: ${device.last_seen || 'Never'}`, 'info');
+                        log('devicesOutput', `API Key: ${device.api_key_preview}`, 'info');
+                    });
+                } else {
+                    log('devicesOutput', `❌ ${data.message}`, 'error');
+                }
+            } catch (error) {
+                log('devicesOutput', `❌ ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
