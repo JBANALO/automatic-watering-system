@@ -1870,21 +1870,9 @@
                 </div>
 
                 <!-- Zone Management Page -->
-              <div id="zones-page" class="page-section">
+                <div id="zones-page" class="page-section">
                     <h2 class="page-title">Zone Management</h2>
                     <div class="page-content">
-                        <div class="card" style="grid-column: 1 / -1; margin-bottom: 20px;">
-                            <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: center;">
-                                <input type="text" id="newZoneName" placeholder="Enter zone name (e.g., Front Garden)" style="flex: 1 !important; padding: 16px 16px !important; background: #eaebec !important; border: none !important; border-radius: 6px !important; font-size: 0.95em !important; font-family: inherit !important; color: #999 !important; height: 50px !important;">
-                                <button class="control-btn" style="background: #667eea !important; color: white !important; padding: 8px 14px !important; border: none !important; border-radius: 6px !important; font-weight: 600 !important; cursor: pointer !important; white-space: nowrap !important; font-size: 0.8em !important; flex-shrink: 0 !important; width: auto !important; margin-bottom: 0 !important; height: auto !important;" onclick="addNewZone()">
-                                    ➕ Add Zone
-                                </button>
-                            </div>
-                            <div style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 12px 15px; border-radius: 6px; color: #0c5460; font-size: 0.9em; display: flex; gap: 8px; align-items: flex-start;">
-                                <span style="font-size: 1.2em; flex-shrink: 0;">💡</span>
-                                <span><strong>Tip:</strong> Create zones to organize your garden areas and set watering schedules for each zone independently.</span>
-                            </div>
-                        </div>
                         <div class="card" style="grid-column: 1 / -1;">
                             <h2>Zone Control</h2>
                             <div id="zoneControl"></div>
@@ -2782,56 +2770,22 @@
             const zoneControl = document.getElementById('zoneControl');
             if (!zoneControl) return;
 
-            zoneControl.innerHTML = zones.map(zone => {
-                // Format last watered time
-                const getLastWateredText = () => {
-                    if (!zone.last_watered || zone.last_watered === '0000-00-00 00:00:00') {
-                        return 'Never';
-                    }
-                    const lastWatered = new Date(zone.last_watered);
-                    const now = new Date();
-                    const diffMs = now - lastWatered;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const diffHours = Math.floor(diffMs / 3600000);
-                    const diffDays = Math.floor(diffMs / 86400000);
-                    
-                    if (diffMins < 60) return `${diffMins}m ago`;
-                    if (diffHours < 24) return `${diffHours}h ago`;
-                    if (diffDays < 7) return `${diffDays}d ago`;
-                    return lastWatered.toLocaleDateString();
-                };
-
-                return `
+            zoneControl.innerHTML = zones.map(zone => `
                 <div class="zone">
                     <div class="zone-header">
                         <span class="zone-name">${zone.zone_name}</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="zone-activity" id="zone${zone.id}Activity" style="display: none; color: #10b981; font-size: 0.9em; font-weight: 600;">💧 Watering...</span>
-                            <button style="background: #fecaca; border: 1px solid #fca5a5; color: #dc2626; font-size: 0.75em; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: 600; transition: all 0.2s;" 
-                                    onmouseover="this.style.background='#fca5a5';" 
-                                    onmouseout="this.style.background='#fecaca';"
-                                    onclick="deleteZone(${zone.id}, '${zone.zone_name}')" title="Delete zone">
-                                🗑️ Delete
-                            </button>
                             <div class="toggle-switch ${zone.enabled ? 'active' : ''}" id="zone${zone.id}Toggle" onclick="toggleZone(this, ${zone.id})">
                                 <div class="toggle-slider"></div>
                             </div>
                         </div>
                     </div>
-                    <div style="margin: 12px 0; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.85em; color: #666; font-weight: 500;">Soil Moisture</span>
-                        <span style="font-size: 0.85em; color: #667eea; font-weight: 600;">${zone.moisture_level}%</span>
-                    </div>
                     <div class="moisture-bar">
-                        <div class="moisture-fill" id="zone${zone.id}Moisture" style="width: ${zone.moisture_level}%; background: linear-gradient(90deg, #fbbf24 0%, #84cc16 50%, #10b981 100%);">${zone.moisture_level}%</div>
-                    </div>
-                    <div style="margin-top: 8px; font-size: 0.8em; color: #999;">
-                        <span style="display: flex; gap: 4px; align-items: center;">
-                            💧 Last watered: <strong style="color: #666;">${getLastWateredText()}</strong>
-                        </span>
+                        <div class="moisture-fill" id="zone${zone.id}Moisture" style="width: ${zone.moisture_level}%">${zone.moisture_level}%</div>
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
-                        <select id="zone${zone.id}Duration" class="time-input" style="flex: 1; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.9em;" onchange="updateZoneLiterDisplay(${zone.id})">
+                        <select id="zone${zone.id}Duration" class="time-input" style="flex: 1; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.9em;">
                             <option value="5">5 minutes</option>
                             <option value="10" selected>10 minutes</option>
                             <option value="15">15 minutes</option>
@@ -2842,13 +2796,8 @@
                              Water Now
                         </button>
                     </div>
-                    <div style="margin-top: 8px; font-size: 0.8em; color: #666; display: flex; justify-content: space-between;">
-                        <span>Water Usage:</span>
-                        <span id="zone${zone.id}LiterDisplay" style="font-weight: 600;">80 liters</span>
-                    </div>
                 </div>
-            `;
-            }).join('');
+            `).join('');
         }
 
         // Update UI settings
@@ -2882,158 +2831,71 @@
             }
         }
 
-        // Delete zone
-        async function deleteZone(zoneId, zoneName) {
-            const confirmed = confirm(`⚠️ Delete Zone?\n\nAre you sure you want to delete "${zoneName}"?\n\nThis action cannot be undone.`);
-            if (!confirmed) return;
-
+        // Manual zone watering
+        async function waterZoneNow(zoneId) {
+            const zone = zones.find(z => z.id === zoneId);
+            if (!zone) return;
+            
+            const durationSelect = document.getElementById(`zone${zoneId}Duration`);
+            const durationMinutes = parseInt(durationSelect.value);
+            const waterBtn = document.getElementById(`zone${zoneId}WaterBtn`);
+            const activitySpan = document.getElementById(`zone${zoneId}Activity`);
+            
+            // Disable button and show watering status
+            waterBtn.disabled = true;
+            waterBtn.style.opacity = '0.5';
+            activitySpan.style.display = 'inline';
+            
+            // Calculate liters
+            const totalLiters = Math.round(durationMinutes * litersPerMinute);
+            
             try {
-                const response = await fetch(API_BASE + 'zones.php?action=delete', {
+                // Call API to record manual watering
+                const response = await fetch(API_BASE + 'zones.php?action=water_now', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ zone_id: zoneId })
+                    body: JSON.stringify({ 
+                        zone_id: zoneId, 
+                        duration_minutes: durationMinutes,
+                        liters: totalLiters
+                    })
                 });
                 
                 const data = await response.json();
-                if (data.status === 'success') {
-                    // Remove zone from local array
-                    zones = zones.filter(z => z.id !== zoneId);
-                    // Re-render zones
-                    renderZones();
-                    alert(`✅ Zone Deleted!\n\n"${zoneName}" has been removed from your system.`);
-                } else {
-                    alert('❌ Error deleting zone: ' + data.message);
-                }
+                
+                // Simulate watering for visual feedback
+                let elapsed = 0;
+                const wateringInterval = setInterval(() => {
+                    elapsed++;
+                    const progress = Math.min((elapsed / durationMinutes) * 100, 100);
+                    const moistureElement = document.getElementById(`zone${zoneId}Moisture`);
+                    if (moistureElement) {
+                        moistureElement.style.width = Math.min(zone.moisture_level + progress, 100) + '%';
+                    }
+                    
+                    if (elapsed >= durationMinutes) {
+                        clearInterval(wateringInterval);
+                        // Update zone moisture
+                        zone.moisture_level = Math.min(100, zone.moisture_level + 50);
+                        updateZoneMoisture();
+                        
+                        // Reset button
+                        waterBtn.disabled = false;
+                        waterBtn.style.opacity = '1';
+                        activitySpan.style.display = 'none';
+                        
+                        // Show success message
+                        alert(`✅ Zone Watering Complete!\n\n${zone.zone_name}\nDuration: ${durationMinutes} minutes\nWater Used: ${totalLiters} liters`);
+                    }
+                }, 1000);
+                
             } catch (error) {
-                console.error('Error deleting zone:', error);
-                alert('❌ Error deleting zone. Please try again.');
+                console.error('Error watering zone:', error);
+                waterBtn.disabled = false;
+                waterBtn.style.opacity = '1';
+                activitySpan.style.display = 'none';
+                alert('❌ Error watering zone. Please try again.');
             }
-        }
-
-        // Update liter display based on duration selection
-        function updateZoneLiterDisplay(zoneId) {
-            const durationSelect = document.getElementById(`zone${zoneId}Duration`);
-            const literDisplay = document.getElementById(`zone${zoneId}LiterDisplay`);
-            
-            if (!durationSelect || !literDisplay) {
-                console.error('Duration or liter display not found');
-                return;
-            }
-            
-            const durationMinutes = parseInt(durationSelect.value);
-            const totalLiters = Math.round(durationMinutes * litersPerMinute);
-            
-            // Assume tank capacity of 1000 liters (100% = 1000L)
-            const tankCapacity = 1000;
-            const litersPerPercent = tankCapacity / 100;
-            const tankDecrease = totalLiters / litersPerPercent;
-            const newTankLevel = Math.max(0, currentTankLevel - tankDecrease);
-            
-            literDisplay.innerHTML = `${totalLiters} liters (Tank: ${Math.round(currentTankLevel)}% → ${Math.round(newTankLevel)}%)`;
-            console.log(`Zone ${zoneId}: ${durationMinutes} min = ${totalLiters} liters, tank: ${currentTankLevel}% → ${newTankLevel}%`);
-        }
-
-        // Manual zone watering
-        async function waterZoneNow(zoneId) {
-            console.log('waterZoneNow called with zoneId:', zoneId, 'type:', typeof zoneId);
-            
-            // Convert to number to ensure proper matching
-            zoneId = parseInt(zoneId);
-            
-            // Log all zones for debugging
-            console.log('Available zones:', zones.map(z => ({ id: z.id, name: z.zone_name, idType: typeof z.id })));
-            
-            const zone = zones.find(z => parseInt(z.id) === zoneId);
-            if (!zone) {
-                console.error('Zone not found:', zoneId);
-                alert('Error: Zone not found');
-                return;
-            }
-            
-            console.log('Found zone:', zone.zone_name);
-            
-            const durationSelect = document.getElementById(`zone${zoneId}Duration`);
-            if (!durationSelect) {
-                console.error('Duration select not found:', `zone${zoneId}Duration`);
-                alert('Error: Could not find duration selector');
-                return;
-            }
-            
-            const durationMinutes = parseInt(durationSelect.value);
-            console.log('Duration minutes:', durationMinutes);
-            
-            const waterBtn = document.getElementById(`zone${zoneId}WaterBtn`);
-            const moistureElement = document.getElementById(`zone${zoneId}Moisture`);
-            
-            if (!waterBtn || !moistureElement) {
-                console.error('Button or moisture element not found');
-                alert('Error: UI elements not found');
-                return;
-            }
-            
-            // Calculate liters using the system's litersPerMinute rate
-            const totalLiters = Math.round(durationMinutes * litersPerMinute);
-            
-            // Tank level validation - prevent watering if tank is too low
-            const tankCapacity = 1000;
-            const litersPerPercent = tankCapacity / 100;
-            const tankDecrease = totalLiters / litersPerPercent;
-            
-            if (currentTankLevel < tankDecrease) {
-                alert(`❌ Insufficient water in tank!\n\nRequired: ${Math.ceil(tankDecrease)}%\nAvailable: ${Math.round(currentTankLevel)}%`);
-                return;
-            }
-            
-            // Disable button and change text
-            waterBtn.disabled = true;
-            waterBtn.style.opacity = '0.5';
-            const originalText = waterBtn.textContent;
-            waterBtn.textContent = '💧 Watering...';
-            
-            // Animate moisture bar increase - proportional to liters used
-            let elapsed = 0;
-            const startMoisture = parseInt(zone.moisture_level) || 0;
-            // Calculate moisture increase proportional to water used (roughly: liters / 2 = % increase)
-            const moistureIncrease = Math.min(100 - startMoisture, totalLiters / 2);
-            const targetMoisture = Math.min(100, startMoisture + moistureIncrease);
-            
-            // Make animation take longer based on duration - multiply by 5 for slower visual feedback
-            const animationDurationSeconds = durationMinutes * 5;
-            
-            console.log('Starting watering animation - duration:', durationMinutes, 'minutes, animation time:', animationDurationSeconds, 'seconds, liters:', totalLiters, 'start moisture:', startMoisture, 'target:', targetMoisture);
-            
-            const wateringInterval = setInterval(() => {
-                elapsed++;
-                const progress = Math.min(elapsed / animationDurationSeconds, 1);
-                const currentMoisture = startMoisture + ((targetMoisture - startMoisture) * progress);
-                
-                moistureElement.style.width = Math.min(currentMoisture, 100) + '%';
-                moistureElement.textContent = Math.round(currentMoisture) + '%';
-                
-                if (elapsed >= animationDurationSeconds) {
-                    clearInterval(wateringInterval);
-                    
-                    // Update zone moisture level
-                    zone.moisture_level = targetMoisture;
-                    
-                    // Update last watered timestamp when watering completes
-                    zone.last_watered = new Date().toISOString().slice(0, 19).replace('T', ' ');
-                    
-                    // Decrease tank level based on water used
-                    currentTankLevel = Math.max(0, currentTankLevel - tankDecrease);
-                    
-                    // Reset button
-                    waterBtn.disabled = false;
-                    waterBtn.style.opacity = '1';
-                    waterBtn.textContent = originalText;
-                    
-                    // Refresh the display with new last watered time and tank level
-                    renderZones();
-                    
-                    console.log('Watering complete');
-                    alert(`✅ Zone Watering Complete!\n\n${zone.zone_name}\nDuration: ${durationMinutes} minutes\nWater Used: ${totalLiters} liters (${litersPerMinute}L/min)`);
-                }
-            }, 1000);
         }
 
         // Update zone moisture
@@ -3045,43 +2907,6 @@
                     element.textContent = zone.moisture_level + '%';
                 }
             });
-        }
-
-        // Add new zone
-        async function addNewZone() {
-            const zoneName = document.getElementById('newZoneName');
-            if (!zoneName) return;
-            
-            const name = zoneName.value.trim();
-            if (!name) {
-                alert('❌ Please enter a zone name');
-                return;
-            }
-
-            try {
-                const response = await fetch(API_BASE + 'zones.php?action=create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ zone_name: name })
-                });
-                
-                const data = await response.json();
-                if (data.status === 'success') {
-                    // Clear input
-                    zoneName.value = '';
-                    zoneName.focus();
-                    
-                    // Reload zones
-                    await loadZones();
-                    
-                    alert(`✅ Zone Created!\n\n${name} has been added to your irrigation system.`);
-                } else {
-                    alert('❌ Error creating zone: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Error creating zone:', error);
-                alert('❌ Error creating zone. Please try again.');
-            }
         }
 
         // Toggle auto mode

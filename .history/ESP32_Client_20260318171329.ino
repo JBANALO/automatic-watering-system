@@ -27,7 +27,6 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include <DHT.h>
 
 // ==================== CONFIGURATION ====================
 // WiFi Credentials
@@ -57,8 +56,8 @@ const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d4
 // ======================================================
 
 // DHT Sensor Setup (optional - comment out if not using)
-#define DHT_TYPE DHT11
-DHT dht(DHT_PIN, DHT_TYPE);
+// #include <DHT.h>
+// DHT dht(DHT_PIN, DHT22);
 
 // Global Variables
 unsigned long lastSensorRead = 0;
@@ -87,8 +86,8 @@ void setup() {
   
   digitalWrite(PUMP_RELAY_PIN, LOW);  // Pump off initially
   
-  // Initialize DHT sensor
-  dht.begin();
+  // Initialize DHT sensor (uncomment if using)
+  // dht.begin();
   
   // Connect to WiFi
   connectWiFi();
@@ -168,15 +167,21 @@ void readSensors() {
   Serial.print(moistureLevel);
   Serial.println("%");
   
-  // Read DHT11 temperature and humidity
+  // Read DHT22 temperature and humidity (uncomment if using)
+  /*
   temperature = dht.readTemperature();
-  humidity = (int)dht.readHumidity();
+  humidity = dht.readHumidity();
   
   if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("DHT11 read failed!");
+    Serial.println("DHT22 read failed!");
     temperature = 0;
     humidity = 0;
   }
+  */
+  
+  // Simulated values if DHT not connected
+  temperature = 25.5;  // Remove this line when using real DHT
+  humidity = 60;       // Remove this line when using real DHT
   
   Serial.print("Temperature: ");
   Serial.print(temperature);
