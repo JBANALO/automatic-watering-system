@@ -1600,7 +1600,7 @@
     <!-- Login/Register Section -->
     <div id="authSection" class="auth-container">
         <div class="auth-card">
-            <h1>💧 Irrigation</h1>
+            <h1> Irrigation</h1>
             <p class="subtitle">Smart Garden Control</p>
             <input type="hidden" id="currentUserIdForVerification">
             <div id="errorMessage" class="error-message"></div>
@@ -1682,7 +1682,7 @@
 
             <!-- Forgot Password Form -->
             <div id="forgotPasswordForm" style="display: none;">
-                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">🔐 Reset Password</h2>
+                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;"> Reset Password</h2>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter your email address and we'll send you a link to reset your password</p>
                 
                 <div id="resetSuccessMessage" class="reset-success-message"></div>
@@ -1721,7 +1721,7 @@
 
             <!-- Password Reset Code Form -->
             <div id="passwordResetCodeForm" style="display: none;">
-                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;">🔑 Reset Your Password</h2>
+                <h2 style="color: #667eea; margin-bottom: 10px; font-size: 1.4em;"> Reset Your Password</h2>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter the 6-digit code we sent to your email and create a new password.</p>
                 
                 <input type="hidden" id="resetEmailForPasswordChange">
@@ -1769,7 +1769,7 @@
                     </button>
                     <div class="user-dropdown" id="userDropdown">
                         <button class="user-dropdown-item" id="userNameDisplay">👤 User</button>
-                        <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()">🚪 Logout</button>
+                        <button class="user-dropdown-item user-dropdown-logout" onclick="handleLogout()"> Logout</button>
                     </div>
                 </div>
             </div>
@@ -1800,7 +1800,7 @@
                             
                             <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
                                 <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-                                    <span style="font-weight: 600; color: #333;">🤖 Auto Mode</span>
+                                    <span style="font-weight: 600; color: #333;"> Auto Mode</span>
                                     <div class="toggle-switch active" id="autoModeToggle" onclick="toggleAutoMode(this)">
                                         <div class="toggle-slider"></div>
                                     </div>
@@ -1809,7 +1809,7 @@
                             </div>
 
                             <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 15px; border-radius: 10px; margin-bottom: 20px;" id="autoStatus">
-                                <div style="font-weight: 600; color: #166534; margin-bottom: 5px;">✅ Auto Mode Active</div>
+                                <div style="font-weight: 600; color: #166534; margin-bottom: 5px;"> Auto Mode Active</div>
                                 <div style="font-size: 0.85em; color: #15803d;">Monitoring all zones for low moisture levels</div>
                             </div>
 
@@ -1824,7 +1824,7 @@
                                     <span id="thresholdValue" style="font-weight: 600; color: #667eea;">50%</span>
                                     <span>80%</span>
                                 </div>
-                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Water zones automatically when moisture falls below this level</p>
+                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Pump turns ON when moisture drops below this level, stays ON until moisture reaches 70%</p>
                             </div>
                             
                             <button class="control-btn start" id="startBtn" onclick="startSystem()">
@@ -1861,7 +1861,7 @@
 
                             <!-- Low Tank Alert -->
                             <div id="lowTankAlert" class="alert" style="display: none; background: #f8d7da; border-color: #f5c6cb; color: #721c24; margin-top: 16px;">
-                                <strong>⚠️ Low Water Tank!</strong><br>
+                                <strong> Low Water Tank!</strong><br>
                                 <span style="font-size: 0.95em;">Water tank level is below 30%. Please refill the tank soon to prevent system shutdown.</span>
                                 <button onclick="hideLowTankAlert()" style="float: right; background: transparent; border: none; font-size: 1.2em; cursor: pointer;">×</button>
                             </div>
@@ -1881,7 +1881,7 @@
                                 </button>
                             </div>
                             <div style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 12px 15px; border-radius: 6px; color: #0c5460; font-size: 0.9em; display: flex; gap: 8px; align-items: flex-start;">
-                                <span style="font-size: 1.2em; flex-shrink: 0;">💡</span>
+                                <span style="font-size: 1.2em; flex-shrink: 0;"></span>
                                 <span><strong>Tip:</strong> Create zones to organize your garden areas and set watering schedules for each zone independently.</span>
                             </div>
                         </div>
@@ -1924,7 +1924,7 @@
                             </button>
 
                             <div class="alert" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
-                                <strong>📅 Scheduled Runs:</strong><br>
+                                <strong> Scheduled Runs:</strong><br>
                                 <div id="morningScheduleDisplay" style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Morning: 6:00 AM for 30 minutes</div>
                                 <div id="eveningScheduleDisplay" style="margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Evening: 6:00 PM for 30 minutes</div>
                             </div>
@@ -1942,7 +1942,7 @@
                             <!-- Weather Stats -->
                             <div class="weather-stat">
                                 <div class="weather-stat-content">
-                                    <span>🌡️</span>
+                                    <span></span>
                                     <div class="weather-stat-value" id="currentTemperature">--°C</div>
                                 </div>
                                 <div class="weather-stat-label">Current Temperature</div>
@@ -1950,7 +1950,7 @@
 
                             <div class="weather-stat">
                                 <div class="weather-stat-content">
-                                    <span>💧</span>
+                                    <span></span>
                                     <div class="weather-stat-value" id="currentHumidity">--%</div>
                                 </div>
                                 <div class="weather-stat-label">Humidity</div>
@@ -1958,7 +1958,7 @@
 
                             <div class="weather-stat">
                                 <div class="weather-stat-content">
-                                    <span>🌧️</span>
+                                    <span></span>
                                     <div class="weather-stat-value" id="currentRainfall">--mm</div>
                                 </div>
                                 <div class="weather-stat-label">Rain Today</div>
@@ -1997,6 +1997,8 @@
         let dailyUsage = 245;
         let runtime = 45;
         let moistureThreshold = 50;
+        let upperMoistureThreshold = 70; // Upper threshold for turning pump OFF
+        let autoPumpState = false; // Track auto mode pump state for hysteresis
         let zones = [];
         let systemSettings = {};
         let currentTankLevel = 100;
@@ -2007,6 +2009,7 @@
         let lowTankAlertShown = false; // Track if low tank alert has been shown
         let pumpFault = false; // Track pump fault status
         let pumpLockout = false; // Track if pump is locked out due to empty tank
+        let activeWateringZones = new Set(); // Track which zones are currently watering
 
         // Page Navigation
         function switchPage(pageId, button) {
@@ -2027,6 +2030,31 @@
             // Mark button as active
             if (button) {
                 button.classList.add('active');
+            }
+            
+            // Save current page to localStorage
+            localStorage.setItem('lastPage', pageId);
+        }
+        
+        // Restore last page on load
+        function restoreLastPage() {
+            const lastPage = localStorage.getItem('lastPage');
+            if (lastPage && lastPage !== 'system') {
+                // Find the page and button
+                const pageElement = document.getElementById(lastPage + '-page');
+                const navBtns = document.querySelectorAll('.nav-btn');
+                let targetButton = null;
+                
+                navBtns.forEach(btn => {
+                    if (btn.onclick && btn.onclick.toString().includes("'" + lastPage + "'")) {
+                        targetButton = btn;
+                    }
+                });
+                
+                if (pageElement && targetButton) {
+                    // Switch to the last page
+                    switchPage(lastPage, targetButton);
+                }
             }
         }
 
@@ -2652,6 +2680,9 @@
                     loadSavedSchedules();
 
                     startAutoMonitoring();
+                    
+                    // Restore last visited page
+                    restoreLastPage();
                 }
             } catch (error) {
                 showError('Failed to load dashboard');
@@ -2664,7 +2695,11 @@
                 const response = await fetch(API_BASE + 'zones.php?action=list');
                 const data = await response.json();
                 if (data.status === 'success') {
-                    zones = data.zones;
+                    // Normalize enabled field to number (database returns it as string "0" or "1")
+                    zones = data.zones.map(zone => ({
+                        ...zone,
+                        enabled: parseInt(zone.enabled) || 0
+                    }));
                     renderZones();
                 }
             } catch (error) {
@@ -2727,6 +2762,12 @@
                     }
 
                     updateZoneMoisture();
+                    // Update tank & pump status for all zones
+                    if (latestSensor) {
+                        updateZoneTankAndPump(latestSensor);
+                        // Check auto mode and update pump status
+                        checkAutoMode(latestSensor);
+                    }
                     // Only update display if system is not running
                     if (!systemRunning) {
                         updateTankLevel();
@@ -2777,6 +2818,43 @@
             }
         }
 
+        // Check auto mode and update pump status
+        function checkAutoMode(sensor) {
+            if (!autoMode) return; // Only run if auto mode is enabled
+            
+            const pumpStatusEl = document.getElementById('pumpStatus');
+            if (!pumpStatusEl) return;
+            
+            // Get moisture level from sensor
+            const moistureLevel = parseInt(sensor.moisture_level) || 0;
+            
+            // Hysteresis logic to prevent rapid on/off cycling:
+            // - Turn ON when moisture drops below lower threshold (moistureThreshold)
+            // - Stay ON until moisture reaches upper threshold (upperMoistureThreshold)
+            // - Turn OFF when moisture reaches upper threshold
+            // - Stay OFF until moisture drops below lower threshold
+            
+            if (!autoPumpState && moistureLevel < moistureThreshold) {
+                // Pump is OFF and moisture is low → Turn ON
+                autoPumpState = true;
+                pumpStatusEl.textContent = '⚙️ ON';
+                pumpStatusEl.style.color = '#10b981';
+            } else if (autoPumpState && moistureLevel >= upperMoistureThreshold) {
+                // Pump is ON and moisture is high enough → Turn OFF
+                autoPumpState = false;
+                pumpStatusEl.textContent = 'OFF';
+                pumpStatusEl.style.color = '#9ca3af';
+            } else if (autoPumpState) {
+                // Pump is ON but moisture hasn't reached upper threshold → Stay ON
+                pumpStatusEl.textContent = '⚙️ ON';
+                pumpStatusEl.style.color = '#10b981';
+            } else {
+                // Pump is OFF and moisture hasn't dropped to lower threshold → Stay OFF
+                pumpStatusEl.textContent = 'OFF';
+                pumpStatusEl.style.color = '#9ca3af';
+            }
+        }
+
         // Render zones dynamically
         function renderZones() {
             const zoneControl = document.getElementById('zoneControl');
@@ -2813,7 +2891,7 @@
                                     onclick="deleteZone(${zone.id}, '${zone.zone_name}')" title="Delete zone">
                                 🗑️ Delete
                             </button>
-                            <div class="toggle-switch ${zone.enabled ? 'active' : ''}" id="zone${zone.id}Toggle" onclick="toggleZone(this, ${zone.id})">
+                            <div class="toggle-switch ${zone.enabled === 1 ? 'active' : ''}" id="zone${zone.id}Toggle" onclick="toggleZone(this, ${zone.id})">
                                 <div class="toggle-slider"></div>
                             </div>
                         </div>
@@ -2846,6 +2924,18 @@
                         <span>Water Usage:</span>
                         <span id="zone${zone.id}LiterDisplay" style="font-weight: 600;">80 liters</span>
                     </div>
+                    
+                    <!-- Tank Level & Pump Status -->
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="text-align: center; padding: 8px; background: #f9fafb; border-radius: 6px;">
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;" id="zone${zone.id}TankDisplay">--</div>
+                            <div style="font-size: 0.75em; color: #666; margin-top: 2px;">🪣 Tank Level</div>
+                        </div>
+                        <div style="text-align: center; padding: 8px; background: #f9fafb; border-radius: 6px;">
+                            <div style="font-size: 1.2em; font-weight: 600;" id="zone${zone.id}PumpDisplay">--</div>
+                            <div style="font-size: 0.75em; color: #666; margin-top: 2px;">⚙️ Pump</div>
+                        </div>
+                    </div>
                 </div>
             `;
             }).join('');
@@ -2870,13 +2960,16 @@
             const enabled = element.classList.contains('active');
             
             try {
-                await fetch(API_BASE + 'zones.php?action=toggle', {
+                const response = await fetch(API_BASE + 'zones.php?action=toggle', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ zone_id: zoneId, enabled: enabled })
                 });
-                const zone = zones.find(z => z.id === zoneId);
-                if (zone) zone.enabled = enabled;
+                const data = await response.json();
+                if (data.status === 'success') {
+                    const zone = zones.find(z => z.id === zoneId);
+                    if (zone) zone.enabled = enabled ? 1 : 0;
+                }
             } catch (error) {
                 console.error('Error toggling zone:', error);
             }
@@ -2990,6 +3083,12 @@
             const originalText = waterBtn.textContent;
             waterBtn.textContent = '💧 Watering...';
             
+            // Add zone to active watering set
+            activeWateringZones.add(zoneId);
+            
+            // Update pump status display immediately
+            await loadSensorData();  // Refresh to get latest sensor data for tank/pump display
+            
             // Animate moisture bar increase - proportional to liters used
             let elapsed = 0;
             const startMoisture = parseInt(zone.moisture_level) || 0;
@@ -3022,6 +3121,9 @@
                     // Decrease tank level based on water used
                     currentTankLevel = Math.max(0, currentTankLevel - tankDecrease);
                     
+                    // Remove zone from active watering set
+                    activeWateringZones.delete(zoneId);
+                    
                     // Reset button
                     waterBtn.disabled = false;
                     waterBtn.style.opacity = '1';
@@ -3029,6 +3131,9 @@
                     
                     // Refresh the display with new last watered time and tank level
                     renderZones();
+                    
+                    // Update pump status (now OFF)
+                    loadSensorData();
                     
                     console.log('Watering complete');
                     alert(`✅ Zone Watering Complete!\n\n${zone.zone_name}\nDuration: ${durationMinutes} minutes\nWater Used: ${totalLiters} liters (${litersPerMinute}L/min)`);
@@ -3043,6 +3148,39 @@
                 if (element) {
                     element.style.width = zone.moisture_level + '%';
                     element.textContent = zone.moisture_level + '%';
+                }
+            });
+        }
+
+        // Update tank level and pump status for all zones
+        function updateZoneTankAndPump(sensor) {
+            zones.forEach(zone => {
+                // Update tank level display
+                const tankEl = document.getElementById(`zone${zone.id}TankDisplay`);
+                if (tankEl && sensor.tank_level !== undefined && sensor.tank_level !== null) {
+                    const tankLevel = Number(sensor.tank_level);
+                    tankEl.textContent = tankLevel + '%';
+                    // Color code: blue (>65%), orange (30-65%), red (<30%)
+                    if (tankLevel >= 65) {
+                        tankEl.style.color = '#667eea';
+                    } else if (tankLevel >= 30) {
+                        tankEl.style.color = '#f59e0b';
+                    } else {
+                        tankEl.style.color = '#ef4444';
+                    }
+                }
+                
+                // Update pump status display
+                const pumpEl = document.getElementById(`zone${zone.id}PumpDisplay`);
+                if (pumpEl) {
+                    const isWatering = activeWateringZones.has(zone.id);
+                    if (isWatering) {
+                        pumpEl.textContent = '⚙️ ON';
+                        pumpEl.style.color = '#10b981';
+                    } else {
+                        pumpEl.textContent = 'OFF';
+                        pumpEl.style.color = '#9ca3af';
+                    }
                 }
             });
         }
