@@ -2,14 +2,22 @@
 // Database Configuration
 // For local: use hardcoded values
 // For Railway: uses environment variables from MySQL plugin
-define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
-define('DB_USER', getenv('MYSQLUSER') ?: 'root');
-define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
-define('DB_NAME', getenv('MYSQLDATABASE') ?: 'irrigation_system');
-define('DB_PORT', getenv('MYSQLPORT') ?: 3306);
 
-// Create connection
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS);
+// Try multiple ways to get env vars for compatibility
+$host = $_ENV['MYSQLHOST'] ?? getenv('MYSQLHOST') ?? 'localhost';
+$user = $_ENV['MYSQLUSER'] ?? getenv('MYSQLUSER') ?? 'root';
+$pass = $_ENV['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') ?? '';
+$db = $_ENV['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') ?? 'irrigation_system';
+$port = $_ENV['MYSQLPORT'] ?? getenv('MYSQLPORT') ?? 3306;
+
+define('DB_HOST', $host);
+define('DB_USER', $user);
+define('DB_PASS', $pass);
+define('DB_NAME', $db);
+define('DB_PORT', $port);
+
+// Create connection with port
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
 
 // Check connection
 if ($conn->connect_error) {
