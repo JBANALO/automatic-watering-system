@@ -1,14 +1,27 @@
 <?php
 // Database Configuration
 // For local: use hardcoded values
-// For Railway: uses environment variables from MySQL plugin
+// For Railway: parse MYSQL_URL environment variable
 
-// Try multiple ways to get env vars for compatibility
-$host = $_ENV['MYSQLHOST'] ?? getenv('MYSQLHOST') ?? 'localhost';
-$user = $_ENV['MYSQLUSER'] ?? getenv('MYSQLUSER') ?? 'root';
-$pass = $_ENV['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') ?? '';
-$db = $_ENV['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') ?? 'irrigation_system';
-$port = $_ENV['MYSQLPORT'] ?? getenv('MYSQLPORT') ?? 3306;
+// Parse Railway MySQL URL if available
+$mysql_url = $_ENV['MYSQL_URL'] ?? getenv('MYSQL_URL') ?? null;
+
+if ($mysql_url) {
+    // Parse mysql://user:password@host:port/database
+    $parsed = parse_url($mysql_url);
+    $host = $parsed['host'] ?? 'localhost';
+    $user = $parsed['user'] ?? 'root';
+    $pass = $parsed['pass'] ?? '';
+    $db = ltrim($parsed['path'] ?? '/irrigation_system', '/');
+    $port = $parsed['port'] ?? 3306;
+} else {
+    // Fallback to individual env vars or defaults for local development
+    $host = $_ENV['MYSQLHOST'] ?? getenv('MYSQLHOST') ?? 'localhost';
+    $user = $_ENV['MYSQLUSER'] ?? getenv('MYSQLUSER') ?? 'root';
+    $pass = $_ENV['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') ?? '';
+    $db = $_ENV['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') ?? 'irrigation_system';
+    $port = $_ENV['MYSQLPORT'] ?? getenv('MYSQLPORT') ?? 3306;
+}
 
 define('DB_HOST', $host);
 define('DB_USER', $user);
@@ -17,7 +30,7 @@ define('DB_NAME', $db);
 define('DB_PORT', $port);
 
 // Create connection with port
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, '', intval(DB_PORT));
 
 // Check connection
 if ($conn->connect_error) {
