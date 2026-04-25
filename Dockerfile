@@ -2,7 +2,7 @@ FROM php:8.2-apache
 
 # Install MySQLi extension and required libraries
 RUN apt-get update && apt-get install -y \
-    libmysqlclient-dev \
+    libmariadb-dev-compat \
     && docker-php-ext-install mysqli pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
