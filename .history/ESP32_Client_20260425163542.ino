@@ -6,6 +6,7 @@
  * HARDWARE CONNECTIONS:
  * - Soil Moisture Sensor D0 (Digital) -> GPIO 32
  * - DHT11 Temperature/Humidity -> GPIO 4
+ * - Rain Sensor (Digital) -> GPIO 35
  * - Water Pump Relay -> GPIO 25
  * - Ultrasonic Sensor (Tank Level) -> TRIG: GPIO 26, ECHO: GPIO 27
  * 
@@ -40,6 +41,7 @@ const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d4
 // Sensor Pins
 #define MOISTURE_D0_PIN 32   // Digital soil moisture (D0): LOW=wet, HIGH=dry
 #define DHT_PIN 4            // DHT11 temperature/humidity
+#define RAIN_PIN 35          // Digital rain sensor
 #define PUMP_RELAY_PIN 25    // Water pump control
 #define TRIG_PIN 26          // Ultrasonic trigger (tank level)
 #define ECHO_PIN 27          // Ultrasonic echo (tank level)
@@ -48,9 +50,9 @@ const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d4
 #define RELAY_ACTIVE_LOW 1
 
 // Timing Configuration (milliseconds)
-#define SENSOR_READ_INTERVAL 2000     // Read sensors every 2 seconds
-#define DATA_SUBMIT_INTERVAL 4000     // Submit data every 4 seconds
-#define COMMAND_POLL_INTERVAL 2000    // Poll for commands every 2 seconds
+#define SENSOR_READ_INTERVAL 5000     // Read sensors every 5 seconds (test mode)
+#define DATA_SUBMIT_INTERVAL 15000    // Submit data every 15 seconds (test mode)
+#define COMMAND_POLL_INTERVAL 5000    // Poll for commands every 5 seconds (test mode)
 #define WIFI_RETRY_INTERVAL 30000     // Retry WiFi every 30 seconds
 
 // Tank Configuration (cm)
@@ -71,6 +73,7 @@ bool pumpState = false;
 int moistureLevel = 0;
 float temperature = 0;
 int humidity = 0;
+int rainfall = 0;
 int tankLevel = 100;
 
 void setPumpRelay(bool on) {
@@ -83,11 +86,12 @@ void setPumpRelay(bool on) {
 void setup() {
   Serial.begin(115200);
   Serial.println("\n\n=== ESP32 Irrigation System Starting ===");
-  Serial.println("Pin map: soilD0=GPIO32, dht=GPIO4, relay=GPIO25, trig=GPIO26, echo=GPIO27");
+  Serial.println("Pin map: soilD0=GPIO32, dht=GPIO4, rain=GPIO35, relay=GPIO25, trig=GPIO26, echo=GPIO27");
   Serial.println("Relay mode: ACTIVE-LOW (LOW=ON, HIGH=OFF)");
   
   // Initialize pins
   pinMode(MOISTURE_D0_PIN, INPUT);
+  pinMode(RAIN_PIN, INPUT);
   pinMode(PUMP_RELAY_PIN, OUTPUT);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
@@ -193,6 +197,11 @@ void readSensors() {
   Serial.print(humidity);
   Serial.println("%");
   
+  // Read rain sensor (digital)
+  rainfall = digitalRead(RAIN_PIN) == LOW ? 100 : 0;  // LOW = raining
+  Serial.print("Rainfall: ");
+  Serial.println(rainfall > 0 ? "Yes" : "No");
+  
   // Read tank level using ultrasonic sensor
   tankLevel = readTankLevel();
   Serial.print("Tank Level: ");
@@ -248,6 +257,7 @@ void submitSensorData() {
   doc["moisture"] = moistureLevel;
   doc["temperature"] = temperature;
   doc["humidity"] = humidity;
+  doc["rainfall"] = rainfall;
   doc["tank_level"] = tankLevel;
   
   String jsonPayload;

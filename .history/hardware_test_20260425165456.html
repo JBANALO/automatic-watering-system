@@ -152,8 +152,8 @@
                 <input type="text" id="deviceName" value="Test ESP32" placeholder="Garden ESP32">
             </div>
             <div class="input-group">
-                <label>Zone ID</label>
-                <input type="number" id="zoneId" value="1" placeholder="1">
+                <label>Zone ID (0 = Unassigned, or enter existing zone ID)</label>
+                <input type="number" id="zoneId" value="0" placeholder="0 for unassigned">
             </div>
             <button onclick="registerDevice()">Register Device</button>
             <div class="output" id="registerOutput">Click "Register Device" to create a new device...</div>
@@ -325,7 +325,6 @@
                 moisture: parseInt(document.getElementById('moisture').value),
                 temperature: parseFloat(document.getElementById('temperature').value),
                 humidity: parseInt(document.getElementById('humidity').value),
-                rainfall: 0,
                 tank_level: parseInt(document.getElementById('tankLevel').value)
             };
             
