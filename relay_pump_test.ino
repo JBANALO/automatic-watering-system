@@ -1,27 +1,22 @@
 /*
- * Relay + Pump Hardware Test (no server needed)
+ * Relay Hardware Test (no server needed)
  *
- * Purpose:
- * - Verify relay wiring and pump power path independently from web/app logic.
- * - Use Serial commands:
- *   1 = pump ON
- *   0 = pump OFF
- *   t = toggle
+ * Auto-cycles relay ON/OFF every 2 seconds so you can verify:
+ * - green relay LED behavior
+ * - click sound
+ * - wiring and polarity
  */
 
 #define RELAY_PIN 25
-#define RELAY_ACTIVE_LOW 1
-
-bool pumpOn = false;
+#define RELAY_ACTIVE_LOW 0
 
 void setRelay(bool on) {
   int onLevel = RELAY_ACTIVE_LOW ? LOW : HIGH;
   int offLevel = RELAY_ACTIVE_LOW ? HIGH : LOW;
   digitalWrite(RELAY_PIN, on ? onLevel : offLevel);
-  pumpOn = on;
 
-  Serial.print("Pump state: ");
-  Serial.println(pumpOn ? "ON" : "OFF");
+  Serial.print("Relay state: ");
+  Serial.println(on ? "ON" : "OFF");
 }
 
 void setup() {
@@ -31,20 +26,15 @@ void setup() {
   pinMode(RELAY_PIN, OUTPUT);
   setRelay(false);
 
-  Serial.println("=== Relay Pump Test Ready ===");
-  Serial.println("Send: 1 (ON), 0 (OFF), t (toggle)");
+  Serial.println("=== Relay GPIO25 Auto Test Ready ===");
+  Serial.println("Cycle: ON 2s -> OFF 2s");
+  Serial.println("If behavior is inverted, set RELAY_ACTIVE_LOW to 1.");
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    char c = (char)Serial.read();
+  setRelay(true);
+  delay(2000);
 
-    if (c == '1') {
-      setRelay(true);
-    } else if (c == '0') {
-      setRelay(false);
-    } else if (c == 't' || c == 'T') {
-      setRelay(!pumpOn);
-    }
-  }
+  setRelay(false);
+  delay(2000);
 }

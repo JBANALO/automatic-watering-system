@@ -39,7 +39,7 @@ const char* SERVER_URL = "http://192.168.1.204/automatic-watering-system/api";  
 const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d415c41b6";  // Get this from device registration
 
 // Sensor Pins
-#define MOISTURE_PIN 34      // Analog soil moisture sensor (unused when USE_MOISTURE_DO is enabled)
+#define MOISTURE_PIN 34      // Analog soil moisture sensor (AO)
 #define MOISTURE_DO_PIN 32   // Digital D0 output from soil sensor module
 #define DHT_PIN 4            // DHT22 temperature/humidity
 #define RAIN_PIN 35          // Digital rain sensor
@@ -53,8 +53,13 @@ const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d4
 // Set to 0 for active-high relay modules (IN=HIGH turns relay ON).
 #define RELAY_ACTIVE_LOW 0
 
-// Set to 1 to use D0 digital moisture (recommended when AO is unstable).
-#define USE_MOISTURE_DO 1
+// Set to 1 to use D0 digital moisture (binary wet/dry).
+#define USE_MOISTURE_DO 0
+
+// Moisture calibration (ESP32 ADC raw range)
+// Adjust after calibration: dry should be the higher raw value, wet the lower raw value.
+#define MOISTURE_RAW_DRY 3300
+#define MOISTURE_RAW_WET 1400
 
 // Timing Configuration (milliseconds)
 #define SENSOR_READ_INTERVAL 5000     // Read sensors every 5 seconds (test mode)
@@ -217,8 +222,10 @@ void readSensors() {
   #else
   // Read soil moisture (0-4095 for ESP32, convert to 0-100%)
   int rawMoisture = analogRead(MOISTURE_PIN);
-  moistureLevel = map(rawMoisture, 4095, 0, 0, 100);  // Invert: dry=0, wet=100
+  moistureLevel = map(rawMoisture, MOISTURE_RAW_DRY, MOISTURE_RAW_WET, 0, 100);
   moistureLevel = constrain(moistureLevel, 0, 100);
+  Serial.print("Moisture raw: ");
+  Serial.println(rawMoisture);
   Serial.print("Moisture: ");
   Serial.print(moistureLevel);
   Serial.println("%");
@@ -243,7 +250,10 @@ void readSensors() {
   
   #if USE_RAIN_SENSOR
   // Read rain sensor (digital)
-  rainfall = digitalRead(RAIN_PIN) == LOW ? 100 : 0;  // LOW = raining
+  int rainRaw = digitalRead(RAIN_PIN);
+  rainfall = rainRaw == LOW ? 100 : 0;  // LOW = raining
+  Serial.print("Rain raw: ");
+  Serial.println(rainRaw);
   Serial.print("Rainfall: ");
   Serial.println(rainfall > 0 ? "Yes" : "No");
   #else
