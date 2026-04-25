@@ -4,8 +4,8 @@
 // Set these from your own measurement:
 // - AIR/DRY reading
 // - WATER/WET reading
-int dryRaw = 650;
-int wetRaw = 3000;
+int dryRaw = 3000;
+int wetRaw = 1200;
 
 void setup() {
   Serial.begin(115200);
@@ -31,8 +31,12 @@ void loop() {
   float voltage = rawValue * (3.3 / 4095.0);
 
   // Convert raw to moisture percentage based on calibration points.
-  // 0% at dryRaw, 100% at wetRaw (works for both ascending/descending sensors).
-  int moisturePercent = map(rawValue, dryRaw, wetRaw, 0, 100);
+  int moisturePercent;
+  if (dryRaw > wetRaw) {
+    moisturePercent = map(rawValue, dryRaw, wetRaw, 0, 100);
+  } else {
+    moisturePercent = map(rawValue, dryRaw, wetRaw, 100, 0);
+  }
   moisturePercent = constrain(moisturePercent, 0, 100);
   
   Serial.print("Raw: ");

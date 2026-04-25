@@ -39,15 +39,16 @@ const char* SERVER_URL = "http://192.168.1.204/automatic-watering-system/api";  
 const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d415c41b6";  // Get this from device registration
 
 // Sensor Pins
-#define MOISTURE_PIN 34      // Analog soil moisture sensor
+#define MOISTURE_PIN 34      // Analog soil moisture sensor (unused when USE_MOISTURE_DO is enabled)
+#define MOISTURE_DO_PIN 32   // Digital D0 output from soil sensor module
 #define DHT_PIN 4            // DHT22 temperature/humidity
 #define RAIN_PIN 35          // Digital rain sensor
 #define PUMP_RELAY_PIN 25    // Water pump control
 #define TRIG_PIN 26          // Ultrasonic trigger (tank level)
 #define ECHO_PIN 27          // Ultrasonic echo (tank level)
 
-// Most relay modules used with ESP32 are active-low (IN=LOW turns relay ON).
-#define RELAY_ACTIVE_LOW 1
+// Set to 1 to use D0 digital moisture (recommended when AO is unstable).
+#define USE_MOISTURE_DO 1
 
 // Timing Configuration (milliseconds)
 #define SENSOR_READ_INTERVAL 5000     // Read sensors every 5 seconds (test mode)
@@ -70,17 +71,13 @@ unsigned long lastCommandPoll = 0;
 unsigned long lastWifiRetry = 0;
 
 bool pumpState = false;
+bool manualWateringActive = false;
+unsigned long manualWateringEndMs = 0;
 int moistureLevel = 0;
 float temperature = 0;
 int humidity = 0;
 int rainfall = 0;
 int tankLevel = 100;
-
-void setPumpRelay(bool on) {
-  int onLevel = RELAY_ACTIVE_LOW ? LOW : HIGH;
-  int offLevel = RELAY_ACTIVE_LOW ? HIGH : LOW;
-  digitalWrite(PUMP_RELAY_PIN, on ? onLevel : offLevel);
-}
 
 // ==================== SETUP ====================
 void setup() {
@@ -89,12 +86,13 @@ void setup() {
   
   // Initialize pins
   pinMode(MOISTURE_PIN, INPUT);
+  pinMode(MOISTURE_DO_PIN, INPUT);
   pinMode(RAIN_PIN, INPUT);
   pinMode(PUMP_RELAY_PIN, OUTPUT);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   
-  setPumpRelay(false);  // Pump off initially
+  digitalWrite(PUMP_RELAY_PIN, LOW);  // Pump off initially
   
   // Initialize DHT sensor
   dht.begin();
@@ -108,6 +106,14 @@ void setup() {
 // ==================== MAIN LOOP ====================
 void loop() {
   unsigned long currentTime = millis();
+
+  // Auto-stop relay when manual watering duration expires.
+  if (manualWateringActive && (long)(currentTime - manualWateringEndMs) >= 0) {
+    manualWateringActive = false;
+    pumpState = false;
+    digitalWrite(PUMP_RELAY_PIN, LOW);
+    Serial.println("✓ Manual watering duration complete - Pump turned OFF");
+  }
   
   // Check WiFi connection
   if (WiFi.status() != WL_CONNECTED) {
@@ -169,6 +175,14 @@ void connectWiFi() {
 void readSensors() {
   Serial.println("\n--- Reading Sensors ---");
   
+  #if USE_MOISTURE_DO
+  int d0Value = digitalRead(MOISTURE_DO_PIN);
+  moistureLevel = (d0Value == LOW) ? 100 : 0;
+  Serial.print("Moisture (D0): ");
+  Serial.print(moistureLevel);
+  Serial.print("% | D0=");
+  Serial.println(d0Value);
+  #else
   // Read soil moisture (0-4095 for ESP32, convert to 0-100%)
   int rawMoisture = analogRead(MOISTURE_PIN);
   moistureLevel = map(rawMoisture, 4095, 0, 0, 100);  // Invert: dry=0, wet=100
@@ -176,6 +190,7 @@ void readSensors() {
   Serial.print("Moisture: ");
   Serial.print(moistureLevel);
   Serial.println("%");
+  #endif
   
   // Read DHT11 temperature and humidity
   temperature = dht.readTemperature();
@@ -330,12 +345,28 @@ void pollCommands() {
 void executeCommand(const char* action, JsonObject params) {
   if (strcmp(action, "turn_on") == 0) {
     pumpState = true;
-    setPumpRelay(true);
+    digitalWrite(PUMP_RELAY_PIN, HIGH);
     Serial.println("✓ Pump turned ON");
+
+    int durationMinutes = 0;
+    if (!params.isNull() && params.containsKey("duration_minutes")) {
+      durationMinutes = (int)params["duration_minutes"];
+    }
+
+    if (durationMinutes > 0) {
+      manualWateringActive = true;
+      manualWateringEndMs = millis() + ((unsigned long)durationMinutes * 60000UL);
+      Serial.print("✓ Manual watering timer set: ");
+      Serial.print(durationMinutes);
+      Serial.println(" minute(s)");
+    } else {
+      manualWateringActive = false;
+    }
     
   } else if (strcmp(action, "turn_off") == 0) {
+    manualWateringActive = false;
     pumpState = false;
-    setPumpRelay(false);
+    digitalWrite(PUMP_RELAY_PIN, LOW);
     Serial.println("✓ Pump turned OFF");
     
   } else if (strcmp(action, "auto_mode") == 0) {

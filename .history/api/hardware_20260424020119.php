@@ -39,7 +39,7 @@ function getAutoDecision($moisture, $rainfall, $tank_level, $threshold, $skip_ra
         $upperThreshold = min(100, $lowerThreshold + 5);
     }
 
-    if ($tank_level !== null && $tank_level <= 15) {
+    if ($tank_level <= 15) {
         return ['action' => 'turn_off', 'lower' => $lowerThreshold, 'upper' => $upperThreshold, 'reason' => 'low_tank'];
     }
 
@@ -57,7 +57,7 @@ function getAutoDecision($moisture, $rainfall, $tank_level, $threshold, $skip_ra
 
     // Optional rain skip in middle band only (outside clear dry/wet decisions).
     // If soil is critically dry, prioritize watering even when rain sensor is noisy/stuck high.
-    if ($skip_rain && $rainfall !== null && $rainfall > 0) {
+    if ($skip_rain && $rainfall > 0) {
         return ['action' => 'turn_off', 'lower' => $lowerThreshold, 'upper' => $upperThreshold, 'reason' => 'rain_detected'];
     }
 
@@ -236,30 +236,18 @@ if ($method === 'POST' && $action === 'submit') {
         $is_test_mode = false;
     }
     
-    // Extract sensor values from payload only (no fabricated defaults)
-    if (!isset($input['moisture'])) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'moisture is required']);
-        exit;
-    }
-
-    $moisture = intval($input['moisture']);
-    $temperature = (isset($input['temperature']) && $input['temperature'] !== '') ? floatval($input['temperature']) : null;
-    $humidity = (isset($input['humidity']) && $input['humidity'] !== '') ? intval($input['humidity']) : null;
-    $rainfall = (isset($input['rainfall']) && $input['rainfall'] !== '') ? intval($input['rainfall']) : null;
-    $tank_level = (isset($input['tank_level']) && $input['tank_level'] !== '') ? intval($input['tank_level']) : null;
+    // Extract sensor values with defaults
+    $moisture = isset($input['moisture']) ? intval($input['moisture']) : 0;
+    $temperature = isset($input['temperature']) ? floatval($input['temperature']) : 0;
+    $humidity = isset($input['humidity']) ? intval($input['humidity']) : 0;
+    $rainfall = isset($input['rainfall']) ? intval($input['rainfall']) : 0;
+    $tank_level = isset($input['tank_level']) ? intval($input['tank_level']) : 100;
     
     // Validate ranges
     $moisture = min(100, max(0, $moisture));
-    if ($humidity !== null) {
-        $humidity = min(100, max(0, $humidity));
-    }
-    if ($tank_level !== null) {
-        $tank_level = min(100, max(0, $tank_level));
-    }
-    if ($rainfall !== null) {
-        $rainfall = min(100, max(0, $rainfall));
-    }
+    $humidity = min(100, max(0, $humidity));
+    $tank_level = min(100, max(0, $tank_level));
+    $rainfall = min(100, max(0, $rainfall));
     
     // Insert sensor data (skip database insert if test mode and zone doesn't exist)
     if ($is_test_mode) {
@@ -275,13 +263,10 @@ if ($method === 'POST' && $action === 'submit') {
         ]);
     } else {
         // Normal mode: save to database
-        $temperatureSql = $temperature === null ? "NULL" : (string)$temperature;
-        $humiditySql = $humidity === null ? "NULL" : (string)$humidity;
-        $rainfallSql = $rainfall === null ? "NULL" : (string)$rainfall;
-        $tankLevelSql = $tank_level === null ? "NULL" : (string)$tank_level;
-        $sql = "INSERT INTO sensor_data (zone_id, moisture_level, temperature, humidity, rainfall, tank_level) VALUES ($zone_id, $moisture, $temperatureSql, $humiditySql, $rainfallSql, $tankLevelSql)";
-
-        if ($conn->query($sql)) {
+        $stmt = $conn->prepare("INSERT INTO sensor_data (zone_id, moisture_level, temperature, humidity, rainfall, tank_level) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("iidiii", $zone_id, $moisture, $temperature, $humidity, $rainfall, $tank_level);
+        
+        if ($stmt->execute()) {
             // Update zone moisture level
             $update = $conn->prepare("UPDATE zones SET moisture_level = ? WHERE id = ?");
             $update->bind_param("ii", $moisture, $zone_id);

@@ -4,8 +4,8 @@
 // Set these from your own measurement:
 // - AIR/DRY reading
 // - WATER/WET reading
-int dryRaw = 650;
-int wetRaw = 3000;
+int dryRaw = 3000;
+int wetRaw = 1200;
 
 void setup() {
   Serial.begin(115200);

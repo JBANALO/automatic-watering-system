@@ -33,11 +33,11 @@
 
 // ==================== CONFIGURATION ====================
 // WiFi Credentials
-const char* WIFI_SSID = "WMSU CCS";
-const char* WIFI_PASSWORD = "P4ZZW0RDC$$";
+const char* WIFI_SSID = "TPK44829284";
+const char* WIFI_PASSWORD = "aywaaa123";
 
 // Server Configuration
-const char* SERVER_URL = "http://192.168.49.137/automatic-watering-system/api";
+const char* SERVER_URL = "http://10.216.240.89/automatic-watering-system/api";
 const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d415c41b6";
 
 // Sensor Pins

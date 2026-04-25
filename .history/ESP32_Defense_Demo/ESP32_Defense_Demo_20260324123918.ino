@@ -33,7 +33,7 @@
 
 // ==================== CONFIGURATION ====================
 // WiFi Credentials
-const char* WIFI_SSID = "WMSU CCS";
+const char* WIFI_SSID = "WMSU CCS_5G";
 const char* WIFI_PASSWORD = "P4ZZW0RDC$$";
 
 // Server Configuration

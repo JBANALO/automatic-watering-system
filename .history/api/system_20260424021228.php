@@ -17,20 +17,12 @@ if ($method === 'GET' && $action === 'get') {
 } elseif ($method === 'POST' && $action === 'update') {
     updateSystemSettings($user_id, $conn);
 } elseif ($method === 'POST' && $action === 'manual_start') {
-    manualControlDisabled();
+    queueManualCommand($user_id, $conn, 'turn_on');
 } elseif ($method === 'POST' && $action === 'stop_all') {
-    manualControlDisabled();
+    queueManualCommand($user_id, $conn, 'turn_off');
 } else {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-}
-
-function manualControlDisabled() {
-    http_response_code(410);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Manual control has been removed. Auto mode handles pump control automatically.'
-    ]);
 }
 
 function isAutoModeEnabled($user_id, $conn) {
@@ -56,8 +48,40 @@ function getSystemSettings($user_id, $conn) {
     echo json_encode(['status' => 'success', 'settings' => $settings]);
 }
 
+function queueStopAllOnAutoDisable($user_id, $conn) {
+    $zones = $conn->query("SELECT id FROM zones WHERE user_id=$user_id AND enabled=1 ORDER BY id ASC");
+    if (!$zones || $zones->num_rows === 0) {
+        return 0;
+    }
+
+    $command_type = 'turn_off';
+    $params = json_encode(['source' => 'auto_mode_disabled']);
+    $stmt = $conn->prepare("INSERT INTO commands (zone_id, command_type, params) VALUES (?, ?, ?)");
+    if (!$stmt) {
+        return 0;
+    }
+
+    $queued = 0;
+    while ($zone = $zones->fetch_assoc()) {
+        $zone_id = intval($zone['id']);
+        $stmt->bind_param("iss", $zone_id, $command_type, $params);
+        if ($stmt->execute()) {
+            $queued++;
+        }
+    }
+
+    return $queued;
+}
+
 function updateSystemSettings($user_id, $conn) {
     $input = json_decode(file_get_contents('php://input'), true);
+
+    $previousAutoMode = null;
+    $currentSettings = $conn->query("SELECT auto_mode FROM system_settings WHERE user_id=$user_id LIMIT 1");
+    if ($currentSettings && $currentSettings->num_rows > 0) {
+        $row = $currentSettings->fetch_assoc();
+        $previousAutoMode = intval($row['auto_mode'] ?? 1);
+    }
     
     $auto_mode = isset($input['auto_mode']) ? (int)$input['auto_mode'] : null;
     $moisture_threshold = isset($input['moisture_threshold']) ? intval($input['moisture_threshold']) : null;
@@ -82,7 +106,16 @@ function updateSystemSettings($user_id, $conn) {
     $sql = "UPDATE system_settings SET " . implode(', ', $updates) . " WHERE user_id=$user_id";
     
     if ($conn->query($sql)) {
-        echo json_encode(['status' => 'success', 'message' => 'Settings updated']);
+        $stoppedZones = 0;
+        if ($auto_mode !== null && intval($auto_mode) === 0 && $previousAutoMode === 1) {
+            $stoppedZones = queueStopAllOnAutoDisable($user_id, $conn);
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Settings updated',
+            'auto_disable_stop_queued' => $stoppedZones
+        ]);
     } else {
         http_response_code(500);
         echo json_encode(['status' => 'error', 'message' => 'Update failed']);

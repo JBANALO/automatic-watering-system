@@ -17,20 +17,12 @@ if ($method === 'GET' && $action === 'get') {
 } elseif ($method === 'POST' && $action === 'update') {
     updateSystemSettings($user_id, $conn);
 } elseif ($method === 'POST' && $action === 'manual_start') {
-    manualControlDisabled();
+    queueManualCommand($user_id, $conn, 'turn_on');
 } elseif ($method === 'POST' && $action === 'stop_all') {
-    manualControlDisabled();
+    queueManualCommand($user_id, $conn, 'turn_off');
 } else {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-}
-
-function manualControlDisabled() {
-    http_response_code(410);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Manual control has been removed. Auto mode handles pump control automatically.'
-    ]);
 }
 
 function isAutoModeEnabled($user_id, $conn) {

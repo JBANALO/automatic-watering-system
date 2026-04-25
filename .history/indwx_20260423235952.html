@@ -1827,9 +1827,15 @@
                                 <p style="font-size: 0.85em; color: #666; margin-top: 8px;">Pump turns ON when moisture drops below this level, stays ON until moisture reaches 70%</p>
                             </div>
                             
-                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 16px; color: #1d4ed8; font-size: 0.9em;">
-                                Auto-only mode is enabled. Pump control is fully automatic based on soil moisture.
-                            </div>
+                            <button class="control-btn start" id="startBtn" onclick="startSystem()">
+                                ▶ Manual Start
+                            </button>
+                            <button class="control-btn stop" id="stopBtn" onclick="stopSystem()" disabled>
+                                ⏹ Stop All
+                            </button>
+                            <button class="control-btn" id="clearFaultBtn" onclick="clearPumpFault()" style="background: #f59e0b; color: white; display: none; margin-top: 10px;">
+                                🔧 Clear Pump Fault
+                            </button>
 
                             <div class="stats">
                                 <div class="stat-box">
@@ -1950,7 +1956,22 @@
                                 <div class="weather-stat-label">Humidity</div>
                             </div>
 
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span></span>
+                                    <div class="weather-stat-value" id="currentRainfall">--mm</div>
+                                </div>
+                                <div class="weather-stat-label">Rain Today</div>
+                            </div>
+
                             <!-- Settings -->
+                            <div class="weather-setting">
+                                <label class="weather-checkbox-label">
+                                    <input type="checkbox" id="skipRain" checked class="weather-checkbox">
+                                    <span class="weather-checkbox-text">Skip watering if rain detected</span>
+                                </label>
+                            </div>
+
                             <div class="weather-setting">
                                 <label class="weather-checkbox-label">
                                     <input type="checkbox" id="autoAdjust" checked class="weather-checkbox">
@@ -2760,15 +2781,19 @@
         function updateWeatherStats(sensor) {
             const tempEl = document.getElementById('currentTemperature');
             const humidityEl = document.getElementById('currentHumidity');
+            const rainEl = document.getElementById('currentRainfall');
 
-            if (tempEl) {
-                const temp = Number(sensor?.temperature);
+            if (tempEl && sensor.temperature !== undefined && sensor.temperature !== null) {
+                const temp = Number(sensor.temperature);
                 tempEl.textContent = Number.isFinite(temp) ? temp.toFixed(1) + '°C' : '--°C';
             }
 
-            if (humidityEl) {
-                const humidity = Number(sensor?.humidity);
-                humidityEl.textContent = Number.isFinite(humidity) ? parseInt(humidity, 10) + '%' : '--%';
+            if (humidityEl && sensor.humidity !== undefined && sensor.humidity !== null) {
+                humidityEl.textContent = parseInt(sensor.humidity, 10) + '%';
+            }
+
+            if (rainEl && sensor.rainfall !== undefined && sensor.rainfall !== null) {
+                rainEl.textContent = parseInt(sensor.rainfall, 10) + 'mm';
             }
         }
 
@@ -2799,14 +2824,6 @@
             
             const pumpStatusEl = document.getElementById('pumpStatus');
             if (!pumpStatusEl) return;
-
-            const enabledZones = zones.filter(z => parseInt(z.enabled, 10) === 1);
-            if (enabledZones.length === 0) {
-                autoPumpState = false;
-                pumpStatusEl.textContent = 'Auto (no enabled zones)';
-                pumpStatusEl.style.color = '#f59e0b';
-                return;
-            }
             
             // Get moisture level from sensor
             const moistureLevel = parseInt(sensor.moisture_level) || 0;
@@ -2820,20 +2837,20 @@
             if (!autoPumpState && moistureLevel < moistureThreshold) {
                 // Pump is OFF and moisture is low → Turn ON
                 autoPumpState = true;
-                pumpStatusEl.textContent = 'Auto ON';
+                pumpStatusEl.textContent = '⚙️ ON';
                 pumpStatusEl.style.color = '#10b981';
             } else if (autoPumpState && moistureLevel >= upperMoistureThreshold) {
                 // Pump is ON and moisture is high enough → Turn OFF
                 autoPumpState = false;
-                pumpStatusEl.textContent = 'Auto OFF';
+                pumpStatusEl.textContent = 'OFF';
                 pumpStatusEl.style.color = '#9ca3af';
             } else if (autoPumpState) {
                 // Pump is ON but moisture hasn't reached upper threshold → Stay ON
-                pumpStatusEl.textContent = 'Auto ON';
+                pumpStatusEl.textContent = '⚙️ ON';
                 pumpStatusEl.style.color = '#10b981';
             } else {
                 // Pump is OFF and moisture hasn't dropped to lower threshold → Stay OFF
-                pumpStatusEl.textContent = 'Auto OFF';
+                pumpStatusEl.textContent = 'OFF';
                 pumpStatusEl.style.color = '#9ca3af';
             }
         }
@@ -2891,8 +2908,21 @@
                             💧 Last watered: <strong style="color: #666;">${getLastWateredText()}</strong>
                         </span>
                     </div>
-                    <div style="margin-top: 12px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.85em; color: #6b7280;">
-                        Zone watering is controlled automatically by moisture threshold.
+                    <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
+                        <select id="zone${zone.id}Duration" class="time-input" style="flex: 1; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 0.9em;" onchange="updateZoneLiterDisplay(${zone.id})">
+                            <option value="5">5 minutes</option>
+                            <option value="10" selected>10 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="20">20 minutes</option>
+                            <option value="30">30 minutes</option>
+                        </select>
+                        <button class="control-btn" style="background: #10b981; color: white; padding: 8px 12px; flex: 1;" onclick="waterZoneNow(${zone.id})" id="zone${zone.id}WaterBtn">
+                             Water Now
+                        </button>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.8em; color: #666; display: flex; justify-content: space-between;">
+                        <span>Water Usage:</span>
+                        <span id="zone${zone.id}LiterDisplay" style="font-weight: 600;">80 liters</span>
                     </div>
                     
                     <!-- Tank Level & Pump Status -->
@@ -2909,8 +2939,6 @@
                 </div>
             `;
             }).join('');
-
-            updateUISettings();
         }
 
         // Update UI settings
@@ -2919,7 +2947,6 @@
             if (autoToggle) {
                 autoToggle.classList.toggle('active', autoMode);
             }
-
             const thresholdSlider = document.getElementById('thresholdSlider');
             if (thresholdSlider) {
                 thresholdSlider.value = moistureThreshold;
@@ -3011,11 +3038,6 @@
 
         // Manual zone watering
         async function waterZoneNow(zoneId) {
-            if (autoMode) {
-                alert('Auto Mode is ON. Disable Auto Mode to use manual watering.');
-                return;
-            }
-
             console.log('waterZoneNow called with zoneId:', zoneId, 'type:', typeof zoneId);
             
             // Convert to number to ensure proper matching
@@ -3280,8 +3302,6 @@
                     autoStatus.style.borderColor = '#fcd34d';
                 }
             }
-
-            updateUISettings();
         }
 
         // Update threshold
@@ -3302,11 +3322,6 @@
 
         // Start system
         async function startSystem() {
-            if (autoMode) {
-                alert('Auto Mode is ON. Disable Auto Mode to use manual controls.');
-                return;
-            }
-
             // Pump lockout - prevent starting if tank is too low
             if (currentTankLevel < 20) {
                 pumpLockout = true;
@@ -3349,7 +3364,6 @@
             document.getElementById('systemStatus').className = 'status-indicator active';
             document.getElementById('startBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
-            updateUISettings();
             
             // Reset counters
             document.getElementById('runtime').textContent = '0';
@@ -3419,11 +3433,6 @@
 
         // Stop system
         async function stopSystem() {
-            if (autoMode) {
-                alert('Auto Mode is ON. Disable Auto Mode to use manual controls.');
-                return;
-            }
-
             try {
                 const response = await fetch(API_BASE + 'system.php?action=stop_all', {
                     method: 'POST',
@@ -3452,7 +3461,6 @@
             document.getElementById('systemStatus').className = 'status-indicator inactive';
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
-            updateUISettings();
             
             // Update pump status to Idle (unless there's a fault)
             const pumpStatus = document.getElementById('pumpStatus');

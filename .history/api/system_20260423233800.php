@@ -17,30 +17,12 @@ if ($method === 'GET' && $action === 'get') {
 } elseif ($method === 'POST' && $action === 'update') {
     updateSystemSettings($user_id, $conn);
 } elseif ($method === 'POST' && $action === 'manual_start') {
-    manualControlDisabled();
+    queueManualCommand($user_id, $conn, 'turn_on');
 } elseif ($method === 'POST' && $action === 'stop_all') {
-    manualControlDisabled();
+    queueManualCommand($user_id, $conn, 'turn_off');
 } else {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-}
-
-function manualControlDisabled() {
-    http_response_code(410);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Manual control has been removed. Auto mode handles pump control automatically.'
-    ]);
-}
-
-function isAutoModeEnabled($user_id, $conn) {
-    $result = $conn->query("SELECT auto_mode FROM system_settings WHERE user_id=$user_id LIMIT 1");
-    if (!$result || $result->num_rows === 0) {
-        return true;
-    }
-
-    $row = $result->fetch_assoc();
-    return intval($row['auto_mode'] ?? 1) === 1;
 }
 
 function getSystemSettings($user_id, $conn) {
@@ -90,15 +72,6 @@ function updateSystemSettings($user_id, $conn) {
 }
 
 function queueManualCommand($user_id, $conn, $command_type) {
-    if (isAutoModeEnabled($user_id, $conn)) {
-        http_response_code(409);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Manual control is disabled while Auto Mode is ON'
-        ]);
-        return;
-    }
-
     $input = json_decode(file_get_contents('php://input'), true);
     $duration_minutes = intval($input['duration_minutes'] ?? 0);
 

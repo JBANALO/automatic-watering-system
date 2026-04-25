@@ -1,7 +1,7 @@
 // Soil Moisture Sensor Calibration Test
-// Pin: GPIO 34 (ADC)
+// Pin: GPIO 32 (ADC)
 
-#define SOIL_SENSOR_PIN 34
+#define SOIL_SENSOR_PIN 32
 
 void setup() {
   Serial.begin(115200);

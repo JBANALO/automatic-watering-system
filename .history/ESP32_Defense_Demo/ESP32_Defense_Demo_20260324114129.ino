@@ -33,8 +33,8 @@
 
 // ==================== CONFIGURATION ====================
 // WiFi Credentials
-const char* WIFI_SSID = "WMSU CCS";
-const char* WIFI_PASSWORD = "P4ZZW0RDC$$";
+const char* WIFI_SSID = "PLDTHOMEFIBRpjcdV";
+const char* WIFI_PASSWORD = "PLDTWIFIKPDMP";
 
 // Server Configuration
 const char* SERVER_URL = "http://192.168.49.137/automatic-watering-system/api";
@@ -45,9 +45,6 @@ const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d4
 #define DHT_PIN 4            // DHT11 temperature/humidity
 #define PUMP_RELAY_PIN 25    // Water pump control relay
 #define STATUS_LED_PIN 2     // Built-in LED for status indication
-
-// D0 logic mode: most modules are LOW when wet. If readings are reversed, set to false.
-#define D0_WET_IS_LOW true
 
 // Timing Configuration (milliseconds)
 #define SENSOR_READ_INTERVAL 5000     // Read sensors every 5 seconds
@@ -191,29 +188,24 @@ void readSensors() {
   
   // ===== SOIL MOISTURE (D0 Digital) =====
   soilD0State = digitalRead(SOIL_D0_PIN);
-  bool isWet = D0_WET_IS_LOW ? (soilD0State == LOW) : (soilD0State == HIGH);
   
   // Convert D0 state to realistic moisture percentage
-  if (isWet) {
-    // WET: uses configurable D0 logic mode for compatibility across modules
+  if (soilD0State == LOW) {
+    // WET: D0 is LOW when above threshold (wet soil)
     // Generate 70-83% moisture (realistic wet soil range)
     int variation = random(-MOISTURE_VARIATION, MOISTURE_VARIATION);
     moistureLevel = MOISTURE_WET_BASE + variation;
     moistureLevel = constrain(moistureLevel, 70, 83);
     
-    Serial.print("🌊 D0 Status: WET (");
-    Serial.print(soilD0State);
-    Serial.print(") → Moisture: ");
+    Serial.print("🌊 D0 Status: WET (0) → Moisture: ");
   } else {
-    // DRY: opposite of configured wet logic
+    // DRY: D0 is HIGH when below threshold (dry soil)
     // Generate 17-33% moisture (realistic dry soil range)
     int variation = random(-MOISTURE_VARIATION, MOISTURE_VARIATION);
     moistureLevel = MOISTURE_DRY_BASE + variation;
     moistureLevel = constrain(moistureLevel, 17, 33);
     
-    Serial.print("🏜️  D0 Status: DRY (");
-    Serial.print(soilD0State);
-    Serial.print(") → Moisture: ");
+    Serial.print("🏜️  D0 Status: DRY (1) → Moisture: ");
   }
   Serial.print(moistureLevel);
   Serial.println("%");

@@ -39,7 +39,7 @@ function getAutoDecision($moisture, $rainfall, $tank_level, $threshold, $skip_ra
         $upperThreshold = min(100, $lowerThreshold + 5);
     }
 
-    if ($tank_level !== null && $tank_level <= 15) {
+    if ($tank_level <= 15) {
         return ['action' => 'turn_off', 'lower' => $lowerThreshold, 'upper' => $upperThreshold, 'reason' => 'low_tank'];
     }
 
@@ -57,7 +57,7 @@ function getAutoDecision($moisture, $rainfall, $tank_level, $threshold, $skip_ra
 
     // Optional rain skip in middle band only (outside clear dry/wet decisions).
     // If soil is critically dry, prioritize watering even when rain sensor is noisy/stuck high.
-    if ($skip_rain && $rainfall !== null && $rainfall > 0) {
+    if ($skip_rain && $rainfall > 0) {
         return ['action' => 'turn_off', 'lower' => $lowerThreshold, 'upper' => $upperThreshold, 'reason' => 'rain_detected'];
     }
 
@@ -275,13 +275,10 @@ if ($method === 'POST' && $action === 'submit') {
         ]);
     } else {
         // Normal mode: save to database
-        $temperatureSql = $temperature === null ? "NULL" : (string)$temperature;
-        $humiditySql = $humidity === null ? "NULL" : (string)$humidity;
-        $rainfallSql = $rainfall === null ? "NULL" : (string)$rainfall;
-        $tankLevelSql = $tank_level === null ? "NULL" : (string)$tank_level;
-        $sql = "INSERT INTO sensor_data (zone_id, moisture_level, temperature, humidity, rainfall, tank_level) VALUES ($zone_id, $moisture, $temperatureSql, $humiditySql, $rainfallSql, $tankLevelSql)";
-
-        if ($conn->query($sql)) {
+        $stmt = $conn->prepare("INSERT INTO sensor_data (zone_id, moisture_level, temperature, humidity, rainfall, tank_level) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("iidiii", $zone_id, $moisture, $temperature, $humidity, $rainfall, $tank_level);
+        
+        if ($stmt->execute()) {
             // Update zone moisture level
             $update = $conn->prepare("UPDATE zones SET moisture_level = ? WHERE id = ?");
             $update->bind_param("ii", $moisture, $zone_id);

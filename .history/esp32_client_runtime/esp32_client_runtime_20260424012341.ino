@@ -39,7 +39,8 @@ const char* SERVER_URL = "http://192.168.1.204/automatic-watering-system/api";  
 const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d415c41b6";  // Get this from device registration
 
 // Sensor Pins
-#define MOISTURE_PIN 34      // Analog soil moisture sensor
+#define MOISTURE_PIN 34      // Analog soil moisture sensor (unused when USE_MOISTURE_DO is enabled)
+#define MOISTURE_DO_PIN 32   // Digital D0 output from soil sensor module
 #define DHT_PIN 4            // DHT22 temperature/humidity
 #define RAIN_PIN 35          // Digital rain sensor
 #define PUMP_RELAY_PIN 25    // Water pump control
@@ -49,10 +50,14 @@ const char* API_KEY = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c2d4
 // Most relay modules used with ESP32 are active-low (IN=LOW turns relay ON).
 #define RELAY_ACTIVE_LOW 1
 
+// Set to 1 to use D0 digital moisture (recommended when AO is unstable).
+#define USE_MOISTURE_DO 1
+
 // Timing Configuration (milliseconds)
 #define SENSOR_READ_INTERVAL 5000     // Read sensors every 5 seconds (test mode)
 #define DATA_SUBMIT_INTERVAL 15000    // Submit data every 15 seconds (test mode)
 #define COMMAND_POLL_INTERVAL 5000    // Poll for commands every 5 seconds (test mode)
+#define SETTINGS_FETCH_INTERVAL 30000 // Refresh auto settings every 30 seconds
 #define WIFI_RETRY_INTERVAL 30000     // Retry WiFi every 30 seconds
 
 // Tank Configuration (cm)
@@ -67,20 +72,33 @@ DHT dht(DHT_PIN, DHT_TYPE);
 unsigned long lastSensorRead = 0;
 unsigned long lastDataSubmit = 0;
 unsigned long lastCommandPoll = 0;
+unsigned long lastSettingsFetch = 0;
 unsigned long lastWifiRetry = 0;
 
 bool pumpState = false;
+bool manualWateringActive = false;
+bool autoPumpState = false;
+unsigned long manualWateringEndMs = 0;
 int moistureLevel = 0;
 float temperature = 0;
 int humidity = 0;
 int rainfall = 0;
 int tankLevel = 100;
 
+// Auto-control settings (fetched from server)
+bool autoModeEnabled = true;
+bool skipRainEnabled = true;
+int moistureThreshold = 50;
+int upperMoistureThreshold = 70;
+
 void setPumpRelay(bool on) {
   int onLevel = RELAY_ACTIVE_LOW ? LOW : HIGH;
   int offLevel = RELAY_ACTIVE_LOW ? HIGH : LOW;
   digitalWrite(PUMP_RELAY_PIN, on ? onLevel : offLevel);
 }
+
+void fetchDeviceSettings();
+void applyAutoWateringLogic();
 
 // ==================== SETUP ====================
 void setup() {
@@ -89,6 +107,7 @@ void setup() {
   
   // Initialize pins
   pinMode(MOISTURE_PIN, INPUT);
+  pinMode(MOISTURE_DO_PIN, INPUT);
   pinMode(RAIN_PIN, INPUT);
   pinMode(PUMP_RELAY_PIN, OUTPUT);
   pinMode(TRIG_PIN, OUTPUT);
@@ -108,6 +127,15 @@ void setup() {
 // ==================== MAIN LOOP ====================
 void loop() {
   unsigned long currentTime = millis();
+
+  // Auto-stop relay when manual watering duration expires.
+  if (manualWateringActive && (long)(currentTime - manualWateringEndMs) >= 0) {
+    manualWateringActive = false;
+    pumpState = false;
+    autoPumpState = false;
+    setPumpRelay(false);
+    Serial.println("✓ Manual watering duration complete - Pump turned OFF");
+  }
   
   // Check WiFi connection
   if (WiFi.status() != WL_CONNECTED) {
@@ -123,6 +151,7 @@ void loop() {
   // Read sensors periodically
   if (currentTime - lastSensorRead >= SENSOR_READ_INTERVAL) {
     readSensors();
+    applyAutoWateringLogic();
     lastSensorRead = currentTime;
   }
   
@@ -136,6 +165,12 @@ void loop() {
   if (currentTime - lastCommandPoll >= COMMAND_POLL_INTERVAL) {
     pollCommands();
     lastCommandPoll = currentTime;
+  }
+
+  // Periodically refresh automation settings from server.
+  if (currentTime - lastSettingsFetch >= SETTINGS_FETCH_INTERVAL) {
+    fetchDeviceSettings();
+    lastSettingsFetch = currentTime;
   }
   
   delay(100);  // Small delay to prevent watchdog issues
@@ -169,6 +204,14 @@ void connectWiFi() {
 void readSensors() {
   Serial.println("\n--- Reading Sensors ---");
   
+  #if USE_MOISTURE_DO
+  int d0Value = digitalRead(MOISTURE_DO_PIN);
+  moistureLevel = (d0Value == LOW) ? 100 : 0;
+  Serial.print("Moisture (D0): ");
+  Serial.print(moistureLevel);
+  Serial.print("% | D0=");
+  Serial.println(d0Value);
+  #else
   // Read soil moisture (0-4095 for ESP32, convert to 0-100%)
   int rawMoisture = analogRead(MOISTURE_PIN);
   moistureLevel = map(rawMoisture, 4095, 0, 0, 100);  // Invert: dry=0, wet=100
@@ -176,6 +219,7 @@ void readSensors() {
   Serial.print("Moisture: ");
   Serial.print(moistureLevel);
   Serial.println("%");
+  #endif
   
   // Read DHT11 temperature and humidity
   temperature = dht.readTemperature();
@@ -326,21 +370,142 @@ void pollCommands() {
   http.end();
 }
 
+// ==================== FETCH SETTINGS ====================
+void fetchDeviceSettings() {
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+
+  HTTPClient http;
+  String url = String(SERVER_URL) + "/hardware.php?action=info";
+  http.begin(url);
+  http.addHeader("X-API-Key", API_KEY);
+
+  int httpCode = http.GET();
+  if (httpCode == 200) {
+    String response = http.getString();
+    StaticJsonDocument<768> doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (!error) {
+      JsonObject settings = doc["settings"];
+      if (!settings.isNull()) {
+        autoModeEnabled = settings["auto_mode"] | autoModeEnabled;
+        skipRainEnabled = settings["skip_rain"] | skipRainEnabled;
+        moistureThreshold = settings["moisture_threshold"] | moistureThreshold;
+        moistureThreshold = constrain(moistureThreshold, 0, 100);
+
+        // Keep an upper threshold for hysteresis and avoid rapid relay toggling.
+        upperMoistureThreshold = 70;
+        if (moistureThreshold >= upperMoistureThreshold) {
+          upperMoistureThreshold = min(100, moistureThreshold + 5);
+        }
+
+        Serial.print("Settings synced | auto_mode=");
+        Serial.print(autoModeEnabled ? "ON" : "OFF");
+        Serial.print(" threshold=");
+        Serial.print(moistureThreshold);
+        Serial.print(" upper=");
+        Serial.print(upperMoistureThreshold);
+        Serial.print(" skip_rain=");
+        Serial.println(skipRainEnabled ? "ON" : "OFF");
+      }
+    }
+  }
+
+  http.end();
+}
+
+// ==================== AUTO WATERING LOGIC ====================
+void applyAutoWateringLogic() {
+  // Manual watering duration always has priority over auto mode.
+  if (manualWateringActive) {
+    return;
+  }
+
+  if (!autoModeEnabled) {
+    if (autoPumpState) {
+      autoPumpState = false;
+      pumpState = false;
+      setPumpRelay(false);
+      Serial.println("Auto mode OFF - Pump turned OFF");
+    }
+    return;
+  }
+
+  // Optional rain skip protection.
+  if (skipRainEnabled && rainfall > 0) {
+    if (autoPumpState) {
+      autoPumpState = false;
+      pumpState = false;
+      setPumpRelay(false);
+      Serial.println("Rain detected - Pump turned OFF");
+    }
+    return;
+  }
+
+  // Simple tank safety cut-off.
+  if (tankLevel <= 15) {
+    if (autoPumpState) {
+      autoPumpState = false;
+      pumpState = false;
+      setPumpRelay(false);
+      Serial.println("Low tank level - Pump turned OFF");
+    }
+    return;
+  }
+
+  // Hysteresis control: ON below lower threshold, OFF above upper threshold.
+  if (!autoPumpState && moistureLevel < moistureThreshold) {
+    autoPumpState = true;
+    pumpState = true;
+    setPumpRelay(true);
+    Serial.println("Auto mode: soil dry -> Pump turned ON");
+  } else if (autoPumpState && moistureLevel >= upperMoistureThreshold) {
+    autoPumpState = false;
+    pumpState = false;
+    setPumpRelay(false);
+    Serial.println("Auto mode: soil wet enough -> Pump turned OFF");
+  }
+}
+
 // ==================== EXECUTE COMMAND ====================
 void executeCommand(const char* action, JsonObject params) {
   if (strcmp(action, "turn_on") == 0) {
     pumpState = true;
     setPumpRelay(true);
     Serial.println("✓ Pump turned ON");
+
+    int durationMinutes = 0;
+    if (!params.isNull() && params.containsKey("duration_minutes")) {
+      durationMinutes = (int)params["duration_minutes"];
+    }
+
+    if (durationMinutes > 0) {
+      manualWateringActive = true;
+      manualWateringEndMs = millis() + ((unsigned long)durationMinutes * 60000UL);
+      Serial.print("✓ Manual watering timer set: ");
+      Serial.print(durationMinutes);
+      Serial.println(" minute(s)");
+    } else {
+      manualWateringActive = false;
+    }
     
   } else if (strcmp(action, "turn_off") == 0) {
+    manualWateringActive = false;
+    autoPumpState = false;
     pumpState = false;
     setPumpRelay(false);
     Serial.println("✓ Pump turned OFF");
     
   } else if (strcmp(action, "auto_mode") == 0) {
-    Serial.println("✓ Auto mode activated");
-    // Implement auto-watering logic based on moisture threshold
+    if (!params.isNull() && params.containsKey("enabled")) {
+      autoModeEnabled = (bool)params["enabled"];
+    } else {
+      autoModeEnabled = true;
+    }
+    Serial.print("✓ Auto mode command applied: ");
+    Serial.println(autoModeEnabled ? "ON" : "OFF");
+    applyAutoWateringLogic();
     
   } else {
     Serial.print("? Unknown command: ");

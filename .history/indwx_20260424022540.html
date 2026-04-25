@@ -1950,7 +1950,22 @@
                                 <div class="weather-stat-label">Humidity</div>
                             </div>
 
+                            <div class="weather-stat">
+                                <div class="weather-stat-content">
+                                    <span></span>
+                                    <div class="weather-stat-value" id="currentRainfall">--mm</div>
+                                </div>
+                                <div class="weather-stat-label">Rain Today</div>
+                            </div>
+
                             <!-- Settings -->
+                            <div class="weather-setting">
+                                <label class="weather-checkbox-label">
+                                    <input type="checkbox" id="skipRain" checked class="weather-checkbox">
+                                    <span class="weather-checkbox-text">Skip watering if rain detected</span>
+                                </label>
+                            </div>
+
                             <div class="weather-setting">
                                 <label class="weather-checkbox-label">
                                     <input type="checkbox" id="autoAdjust" checked class="weather-checkbox">
@@ -2760,15 +2775,19 @@
         function updateWeatherStats(sensor) {
             const tempEl = document.getElementById('currentTemperature');
             const humidityEl = document.getElementById('currentHumidity');
+            const rainEl = document.getElementById('currentRainfall');
 
-            if (tempEl) {
-                const temp = Number(sensor?.temperature);
+            if (tempEl && sensor.temperature !== undefined && sensor.temperature !== null) {
+                const temp = Number(sensor.temperature);
                 tempEl.textContent = Number.isFinite(temp) ? temp.toFixed(1) + '°C' : '--°C';
             }
 
-            if (humidityEl) {
-                const humidity = Number(sensor?.humidity);
-                humidityEl.textContent = Number.isFinite(humidity) ? parseInt(humidity, 10) + '%' : '--%';
+            if (humidityEl && sensor.humidity !== undefined && sensor.humidity !== null) {
+                humidityEl.textContent = parseInt(sensor.humidity, 10) + '%';
+            }
+
+            if (rainEl && sensor.rainfall !== undefined && sensor.rainfall !== null) {
+                rainEl.textContent = parseInt(sensor.rainfall, 10) + 'mm';
             }
         }
 
