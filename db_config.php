@@ -1,9 +1,12 @@
 <?php
 // Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'irrigation_system');
+// For local: use hardcoded values
+// For Railway: uses environment variables from MySQL plugin
+define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
+define('DB_USER', getenv('MYSQLUSER') ?: 'root');
+define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: 'irrigation_system');
+define('DB_PORT', getenv('MYSQLPORT') ?: 3306);
 
 // Create connection
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS);
