@@ -12,6 +12,7 @@ require_once '../db_config.php';
 define('BREVO_SMTP_USER', getenv('BREVO_SMTP_USER') ?: '');
 define('BREVO_SMTP_PASSWORD', getenv('BREVO_SMTP_PASSWORD') ?: '');
 define('BREVO_API_KEY', getenv('BREVO_API_KEY') ?: '');
+define('BREVO_SENDER_EMAIL', getenv('BREVO_SENDER_EMAIL') ?: 'heidilynrubia09@gmail.com');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -58,7 +59,7 @@ function sendEmailViaSMTP($to, $subject, $htmlContent) {
         
         $email_data = [
             'sender' => [
-                'email' => BREVO_SMTP_USER ?: 'noreply@automaticwatering.com',
+                'email' => BREVO_SENDER_EMAIL,
                 'name' => 'Irrigation System'
             ],
             'to' => [
