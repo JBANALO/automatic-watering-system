@@ -6,7 +6,6 @@ ini_set('display_errors', '0');
 
 session_start();
 require_once '../db_config.php';
-require_once 'GmailSMTP.php';
 
 // Brevo SMTP Configuration (from environment variables)
 // Set these in your .env file or environment variables
@@ -48,14 +47,46 @@ function generateVerificationCode() {
 }
 
 function sendEmailViaSMTP($to, $subject, $htmlContent) {
+    // Use Brevo API for sending emails
+    if (empty(BREVO_API_KEY)) {
+        error_log("Brevo API key not configured");
+        return false;
+    }
+
     try {
-        $smtp = new BrevoSMTP(BREVO_SMTP_USER, BREVO_SMTP_PASSWORD);
-        $result = $smtp->send($to, $subject, $htmlContent);
+        $ch = curl_init('https://api.brevo.com/v3/smtp/email');
         
-        if ($result) {
+        $email_data = [
+            'sender' => [
+                'email' => BREVO_SMTP_USER ?: 'noreply@automaticwatering.com',
+                'name' => 'Irrigation System'
+            ],
+            'to' => [
+                [
+                    'email' => $to
+                ]
+            ],
+            'subject' => $subject,
+            'htmlContent' => $htmlContent
+        ];
+        
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'accept: application/json',
+            'content-type: application/json',
+            'api-key: ' . BREVO_API_KEY
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($email_data));
+        
+        $response = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpcode >= 200 && $httpcode < 300) {
             return true;
         } else {
-            error_log("Failed to send email to: $to");
+            error_log("Brevo API error: HTTP $httpcode - $response");
             return false;
         }
     } catch (Exception $e) {
