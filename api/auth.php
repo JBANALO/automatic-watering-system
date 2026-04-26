@@ -8,9 +8,11 @@ session_start();
 require_once '../db_config.php';
 require_once 'GmailSMTP.php';
 
-// Gmail Configuration
-define('GMAIL_USER', 'asniasrp@gmail.com');
-define('GMAIL_PASSWORD', 'lphl pzqf ijlb ajqq');
+// Brevo SMTP Configuration (from environment variables)
+// Set these in your .env file or environment variables
+define('BREVO_SMTP_USER', getenv('BREVO_SMTP_USER') ?: '');
+define('BREVO_SMTP_PASSWORD', getenv('BREVO_SMTP_PASSWORD') ?: '');
+define('BREVO_API_KEY', getenv('BREVO_API_KEY') ?: '');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -47,7 +49,7 @@ function generateVerificationCode() {
 
 function sendEmailViaSMTP($to, $subject, $htmlContent) {
     try {
-        $smtp = new GmailSMTP(GMAIL_USER, GMAIL_PASSWORD);
+        $smtp = new BrevoSMTP(BREVO_SMTP_USER, BREVO_SMTP_PASSWORD);
         $result = $smtp->send($to, $subject, $htmlContent);
         
         if ($result) {

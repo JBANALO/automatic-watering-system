@@ -19,7 +19,7 @@ class BrevoSMTP {
     
     public function send($to, $subject, $htmlContent) {
         try {
-            // Connect to Brevo SMTP
+            // Connect to Gmail SMTP
             $this->connection = stream_socket_client(
                 "tcp://{$this->host}:{$this->port}",
                 $errno,
@@ -91,7 +91,7 @@ class BrevoSMTP {
             
             return true;
         } catch (Exception $e) {
-            error_log("Brevo SMTP Error: " . $e->getMessage());
+            error_log("Gmail SMTP Error: " . $e->getMessage());
             $this->disconnect();
             return false;
         }
