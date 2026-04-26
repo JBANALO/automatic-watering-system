@@ -45,93 +45,26 @@ function generateVerificationCode() {
 }
 
 function sendEmailViaSMTP($to, $subject, $htmlContent) {
-    // Use Gmail SMTP for sending emails
+    // Use PHP mail with Gmail SMTP via Sendmail
     if (empty(GMAIL_EMAIL) || empty(GMAIL_APP_PASSWORD)) {
         error_log("Gmail credentials not configured");
         return false;
     }
 
     try {
-        // Gmail SMTP settings
-        $host = "smtp.gmail.com";
-        $port = 587;
-        $email = GMAIL_EMAIL;
-        $password = GMAIL_APP_PASSWORD;
-        
-        // Connect to Gmail SMTP
-        $handle = fsockopen($host, $port, $errno, $errstr, 15);
-        if (!$handle) {
-            error_log("SMTP connection failed: $errstr ($errno)");
-            return false;
-        }
-        
-        // Enable TLS
-        fgets($handle);
-        fputs($handle, "EHLO smtp.gmail.com\r\n");
-        fgets($handle);
-        fgets($handle);
-        fgets($handle);
-        fgets($handle);
-        
-        fputs($handle, "STARTTLS\r\n");
-        fgets($handle);
-        
-        // Upgrade connection to TLS
-        if (!stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-            error_log("STARTTLS failed");
-            fclose($handle);
-            return false;
-        }
-        
-        // Send EHLO again after TLS
-        fputs($handle, "EHLO smtp.gmail.com\r\n");
-        fgets($handle);
-        fgets($handle);
-        fgets($handle);
-        fgets($handle);
-        fgets($handle);
-        
-        // Authenticate
-        fputs($handle, "AUTH LOGIN\r\n");
-        fgets($handle);
-        
-        fputs($handle, base64_encode($email) . "\r\n");
-        fgets($handle);
-        
-        fputs($handle, base64_encode($password) . "\r\n");
-        $response = fgets($handle);
-        
-        if (strpos($response, '235') === false) {
-            error_log("SMTP authentication failed: $response");
-            fclose($handle);
-            return false;
-        }
-        
-        // Send email
-        fputs($handle, "MAIL FROM: <$email>\r\n");
-        fgets($handle);
-        
-        fputs($handle, "RCPT TO: <$to>\r\n");
-        fgets($handle);
-        
-        fputs($handle, "DATA\r\n");
-        fgets($handle);
-        
-        $headers = "From: Irrigation System <$email>\r\n";
-        $headers .= "To: <$to>\r\n";
-        $headers .= "Subject: $subject\r\n";
+        $headers = "From: Irrigation System <" . GMAIL_EMAIL . ">\r\n";
+        $headers .= "Reply-To: " . GMAIL_EMAIL . "\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         
-        $message = $headers . "\r\n" . $htmlContent;
+        $result = mail($to, $subject, $htmlContent, $headers);
         
-        fputs($handle, $message . "\r\n.\r\n");
-        fgets($handle);
-        
-        fputs($handle, "QUIT\r\n");
-        fclose($handle);
-        
-        return true;
+        if ($result) {
+            return true;
+        } else {
+            error_log("PHP mail() failed");
+            return false;
+        }
     } catch (Exception $e) {
         error_log("Email exception: " . $e->getMessage());
         return false;
