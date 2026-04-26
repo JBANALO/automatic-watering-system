@@ -166,10 +166,9 @@ function registerUser($input, $conn) {
     $hashed = password_hash($password, PASSWORD_BCRYPT);
     $verificationCode = generateVerificationCode();
     $verificationCodeHash = password_hash($verificationCode, PASSWORD_BCRYPT);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
     
     $sql = "INSERT INTO users (username, first_name, last_name, email, password, verification_code, verification_code_expires, email_verified) 
-            VALUES ('$username', '$firstName', '$lastName', '$email', '$hashed', '$verificationCodeHash', '$expiresAt', 0)";
+            VALUES ('$username', '$firstName', '$lastName', '$email', '$hashed', '$verificationCodeHash', DATE_ADD(NOW(), INTERVAL 5 MINUTE), 0)";
     
     if ($conn->query($sql)) {
         $user_id = $conn->insert_id;
@@ -178,12 +177,12 @@ function registerUser($input, $conn) {
         $emailSent = sendVerificationEmail($email, $firstName, $verificationCode);
         
         if ($emailSent) {
+            http_response_code(200);
             echo json_encode([
                 'status' => 'success', 
                 'message' => 'Registration successful! Check your email for the 6-digit verification code. Code expires in 5 minutes.',
                 'user_id' => $user_id,
-                'requires_verification' => true,
-                'expires_at' => $expiresAt
+                'requires_verification' => true
             ]);
         } else {
             // Email failed but registration succeeded - show test code for development
@@ -267,10 +266,14 @@ function verifyEmail($input, $conn) {
         return;
     }
     
-    if (strtotime($user['verification_code_expires']) < time()) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Verification code expired']);
-        return;
+    // Check if code has expired using database NOW() for consistency
+    $expireCheck = $conn->query("SELECT IF(NOW() > verification_code_expires, 1, 0) as expired FROM users WHERE id=$userId");
+    if ($expireCheck && $row = $expireCheck->fetch_assoc()) {
+        if ($row['expired']) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Verification code expired. Please register again.']);
+            return;
+        }
     }
     
     if (password_verify($code, $user['verification_code'])) {
@@ -286,6 +289,7 @@ function verifyEmail($input, $conn) {
         $conn->query("INSERT INTO system_settings (user_id) VALUES ($userId)");
         
         $_SESSION['user_id'] = $userId;
+        http_response_code(200);
         echo json_encode([
             'status' => 'success', 
             'message' => 'Email verified successfully! You are now logged in.',
