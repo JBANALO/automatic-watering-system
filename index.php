@@ -1784,6 +1784,7 @@
                 <button class="nav-btn" onclick="switchPage('zones', this)">Zone Management</button>
                 <button class="nav-btn" onclick="switchPage('schedule', this)">Schedules</button>
                 <button class="nav-btn" onclick="switchPage('sensors', this)">Sensors & Weather</button>
+                <button class="nav-btn" onclick="switchPage('devices', this); loadDevices(); populateDeviceZoneSelect();">Devices</button>
             </div>
 
             <!-- Main Content Area -->
@@ -1957,6 +1958,34 @@
                                     <span class="weather-checkbox-text">Auto-adjust based on soil moisture</span>
                                 </label>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Devices Page -->
+                <div id="devices-page" class="page-section">
+                    <h2 class="page-title">📡 Devices</h2>
+                    <div class="page-content">
+                        <div class="card">
+                            <h2>Register New Device</h2>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #333;">Device Name</label>
+                                <input type="text" id="newDeviceName" placeholder="e.g. Garden ESP32"
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em; box-sizing: border-box;">
+                            </div>
+                            <div style="margin-bottom: 18px;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #333;">Zone (optional)</label>
+                                <select id="newDeviceZone" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em;">
+                                    <option value="0">Unassigned</option>
+                                </select>
+                            </div>
+                            <button onclick="registerNewDevice()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 0.95em; cursor: pointer; font-weight: 600;">Register Device</button>
+                            <div id="registerDeviceResult" style="margin-top: 15px; display: none;"></div>
+                        </div>
+
+                        <div class="card">
+                            <h2>Registered Devices <button onclick="loadDevices()" style="float: right; background: #f3f4f6; border: 1px solid #ddd; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">↻ Refresh</button></h2>
+                            <div id="devicesList" style="margin-top: 10px;">Loading devices...</div>
                         </div>
                     </div>
                 </div>
@@ -3621,6 +3650,114 @@
                 // even when auto mode is disabled.
                 await loadSensorData();
             }, 3000);
+        }
+
+        // ── Devices ──────────────────────────────────────────────────────────────
+
+        async function loadDevices() {
+            const container = document.getElementById('devicesList');
+            if (!container) return;
+            container.innerHTML = 'Loading...';
+            try {
+                const res = await fetch(API_BASE + 'device_register.php?action=list');
+                const data = await res.json();
+                if (!data.devices || data.devices.length === 0) {
+                    container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No devices registered yet.</p>';
+                    return;
+                }
+                container.innerHTML = data.devices.map(d => `
+                    <div style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 15px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 1em; color: #333;">${d.device_name}</div>
+                                <div style="font-size: 0.82em; color: #888; margin-top: 2px;">ID: ${d.device_id}</div>
+                                <div style="font-size: 0.82em; color: #888;">Zone: ${d.zone_name || 'Unassigned'}</div>
+                                <div style="font-size: 0.82em; color: #888;">Last Seen: ${d.last_seen || 'Never'}</div>
+                                <div style="font-size: 0.82em; color: #888;">Status: <span style="color: ${d.status === 'active' ? '#16a34a' : '#dc2626'}; font-weight: 600;">${d.status}</span></div>
+                            </div>
+                            <button onclick="deleteDevice(${d.id}, '${d.device_name}')" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;">Delete</button>
+                        </div>
+                        <div style="margin-top: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
+                            <div style="font-size: 0.8em; color: #64748b; margin-bottom: 4px; font-weight: 600;">API Key</div>
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <code id="apikey-${d.id}" style="font-size: 0.8em; color: #1e293b; word-break: break-all; flex: 1;">${d.api_key_preview}</code>
+                                <button onclick="revealApiKey(${d.id})" style="background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; white-space: nowrap;">Show Full Key</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p style="color: red;">Failed to load devices.</p>';
+            }
+        }
+
+        async function registerNewDevice() {
+            const name = document.getElementById('newDeviceName').value.trim();
+            const zoneId = parseInt(document.getElementById('newDeviceZone').value);
+            const resultDiv = document.getElementById('registerDeviceResult');
+            resultDiv.style.display = 'block';
+            if (!name) {
+                resultDiv.innerHTML = '<div style="color: #dc2626; background: #fee2e2; padding: 10px; border-radius: 8px;">Please enter a device name.</div>';
+                return;
+            }
+            try {
+                const res = await fetch(API_BASE + 'device_register.php?action=register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_name: name, zone_id: zoneId })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `
+                        <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 700; color: #15803d; margin-bottom: 8px;">✅ Device registered!</div>
+                            <div style="font-size: 0.9em; color: #166534; margin-bottom: 6px;">Device ID: <strong>${data.device.device_id}</strong></div>
+                            <div style="font-size: 0.9em; color: #166534; margin-bottom: 8px;">Copy this API Key into your ESP32 code:</div>
+                            <div style="background: #1e293b; color: #4ade80; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85em; word-break: break-all;">${data.device.api_key}</div>
+                        </div>`;
+                    document.getElementById('newDeviceName').value = '';
+                    loadDevices();
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #dc2626; background: #fee2e2; padding: 10px; border-radius: 8px;">❌ ${data.message}</div>`;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = '<div style="color: #dc2626; background: #fee2e2; padding: 10px; border-radius: 8px;">Network error. Please try again.</div>';
+            }
+        }
+
+        async function revealApiKey(deviceId) {
+            try {
+                const res = await fetch(API_BASE + 'device_register.php?action=details&device_id=' + deviceId);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    document.getElementById('apikey-' + deviceId).textContent = data.device.api_key;
+                }
+            } catch(e) {}
+        }
+
+        async function deleteDevice(deviceId, deviceName) {
+            if (!confirm(`Delete device "${deviceName}"? This cannot be undone.`)) return;
+            try {
+                const res = await fetch(API_BASE + 'device_register.php?action=delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_id: deviceId })
+                });
+                const data = await res.json();
+                if (data.status === 'success') loadDevices();
+            } catch(e) {}
+        }
+
+        function populateDeviceZoneSelect() {
+            const select = document.getElementById('newDeviceZone');
+            if (!select || !zones || zones.length === 0) return;
+            select.innerHTML = '<option value="0">Unassigned</option>';
+            zones.forEach(z => {
+                const opt = document.createElement('option');
+                opt.value = z.id;
+                opt.textContent = z.zone_name;
+                select.appendChild(opt);
+            });
         }
 
         // Logout
