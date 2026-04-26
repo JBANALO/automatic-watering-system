@@ -7,12 +7,9 @@ ini_set('display_errors', '0');
 session_start();
 require_once '../db_config.php';
 
-// Brevo SMTP Configuration (from environment variables)
-// Set these in your .env file or environment variables
-define('BREVO_SMTP_USER', getenv('BREVO_SMTP_USER') ?: '');
-define('BREVO_SMTP_PASSWORD', getenv('BREVO_SMTP_PASSWORD') ?: '');
-define('BREVO_API_KEY', getenv('BREVO_API_KEY') ?: '');
-define('BREVO_SENDER_EMAIL', getenv('BREVO_SENDER_EMAIL') ?: 'heidilynrubia09@gmail.com');
+// Gmail SMTP Configuration (from environment variables)
+define('GMAIL_EMAIL', getenv('GMAIL_EMAIL') ?: 'heidilynrubia09@gmail.com');
+define('GMAIL_APP_PASSWORD', getenv('GMAIL_APP_PASSWORD') ?: '');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -48,48 +45,93 @@ function generateVerificationCode() {
 }
 
 function sendEmailViaSMTP($to, $subject, $htmlContent) {
-    // Use Brevo API for sending emails
-    if (empty(BREVO_API_KEY)) {
-        error_log("Brevo API key not configured");
+    // Use Gmail SMTP for sending emails
+    if (empty(GMAIL_EMAIL) || empty(GMAIL_APP_PASSWORD)) {
+        error_log("Gmail credentials not configured");
         return false;
     }
 
     try {
-        $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+        // Gmail SMTP settings
+        $host = "smtp.gmail.com";
+        $port = 587;
+        $email = GMAIL_EMAIL;
+        $password = GMAIL_APP_PASSWORD;
         
-        $email_data = [
-            'sender' => [
-                'email' => BREVO_SENDER_EMAIL,
-                'name' => 'Irrigation System'
-            ],
-            'to' => [
-                [
-                    'email' => $to
-                ]
-            ],
-            'subject' => $subject,
-            'htmlContent' => $htmlContent
-        ];
-        
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'accept: application/json',
-            'content-type: application/json',
-            'api-key: ' . BREVO_API_KEY
-        ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($email_data));
-        
-        $response = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpcode >= 200 && $httpcode < 300) {
-            return true;
-        } else {
-            error_log("Brevo API error: HTTP $httpcode - $response");
+        // Connect to Gmail SMTP
+        $handle = fsockopen($host, $port, $errno, $errstr, 15);
+        if (!$handle) {
+            error_log("SMTP connection failed: $errstr ($errno)");
             return false;
         }
+        
+        // Enable TLS
+        fgets($handle);
+        fputs($handle, "EHLO smtp.gmail.com\r\n");
+        fgets($handle);
+        fgets($handle);
+        fgets($handle);
+        fgets($handle);
+        
+        fputs($handle, "STARTTLS\r\n");
+        fgets($handle);
+        
+        // Upgrade connection to TLS
+        if (!stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            error_log("STARTTLS failed");
+            fclose($handle);
+            return false;
+        }
+        
+        // Send EHLO again after TLS
+        fputs($handle, "EHLO smtp.gmail.com\r\n");
+        fgets($handle);
+        fgets($handle);
+        fgets($handle);
+        fgets($handle);
+        fgets($handle);
+        
+        // Authenticate
+        fputs($handle, "AUTH LOGIN\r\n");
+        fgets($handle);
+        
+        fputs($handle, base64_encode($email) . "\r\n");
+        fgets($handle);
+        
+        fputs($handle, base64_encode($password) . "\r\n");
+        $response = fgets($handle);
+        
+        if (strpos($response, '235') === false) {
+            error_log("SMTP authentication failed: $response");
+            fclose($handle);
+            return false;
+        }
+        
+        // Send email
+        fputs($handle, "MAIL FROM: <$email>\r\n");
+        fgets($handle);
+        
+        fputs($handle, "RCPT TO: <$to>\r\n");
+        fgets($handle);
+        
+        fputs($handle, "DATA\r\n");
+        fgets($handle);
+        
+        $headers = "From: Irrigation System <$email>\r\n";
+        $headers .= "To: <$to>\r\n";
+        $headers .= "Subject: $subject\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        
+        $message = $headers . "\r\n" . $htmlContent;
+        
+        fputs($handle, $message . "\r\n.\r\n");
+        fgets($handle);
+        
+        fputs($handle, "QUIT\r\n");
+        fclose($handle);
+        
+        return true;
     } catch (Exception $e) {
         error_log("Email exception: " . $e->getMessage());
         return false;
