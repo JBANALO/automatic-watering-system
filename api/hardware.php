@@ -362,9 +362,6 @@ if ($method === 'POST' && $action === 'submit') {
             $update->bind_param("ii", $moisture, $zone_id);
             $update->execute();
 
-            // Reset stale 'sent' commands back to 'pending' so they are re-delivered after ESP32 reconnect
-            $conn->query("UPDATE commands SET status='pending' WHERE zone_id=$zone_id AND status='sent'");
-
             // Schedule-based control: check if current time is within a scheduled window
             checkAndQueueSchedule($conn, $device, $zone_id);
 

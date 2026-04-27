@@ -75,13 +75,16 @@ if ($method === 'GET' && $action === 'poll') {
         exit;
     }
     
-    // Get pending commands for this zone
+    // Mark all but the latest pending command as failed (avoid replaying stale commands)
+    $conn->query("UPDATE commands SET status='failed' WHERE zone_id=$zone_id AND status='pending' AND id NOT IN (SELECT * FROM (SELECT MAX(id) FROM commands WHERE zone_id=$zone_id AND status='pending') AS latest)");
+
+    // Get only the latest pending command for this zone
     $stmt = $conn->prepare("
         SELECT id, command_type, params, created_at 
         FROM commands 
         WHERE zone_id = ? AND status = 'pending' 
-        ORDER BY created_at ASC 
-        LIMIT 10
+        ORDER BY id DESC 
+        LIMIT 1
     ");
     $stmt->bind_param("i", $zone_id);
     $stmt->execute();
