@@ -38,6 +38,9 @@ const char* API_KEY    = "9252eaf9cb94b83ee73b5e33ece3fc7db61e7d33985a0fb1447326
 #define ECHO_PIN      27    // Ultrasonic sensor ECHO
 #define RELAY_PIN     25    // Water pump relay
 
+// Relay polarity (most modules are active-low: LOW = ON)
+bool RELAY_ACTIVE_LOW = true;
+
 // ─── Tank Calibration (adjust to your tank) ───────────────────────────────────
 #define TANK_HEIGHT_CM 100.0  // Height of your water tank in cm
 #define TANK_EMPTY_CM   23.0  // Distance (cm) when tank is empty (measured)
@@ -54,6 +57,14 @@ DHT dht(DHT_PIN, DHT_TYPE);
 unsigned long lastSubmit = 0;
 unsigned long lastPoll   = 0;
 bool pumpState = false;  // Track actual relay state
+
+void setRelay(bool on) {
+    int onLevel = RELAY_ACTIVE_LOW ? LOW : HIGH;
+    int offLevel = RELAY_ACTIVE_LOW ? HIGH : LOW;
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, on ? onLevel : offLevel);
+    pumpState = on;
+}
 
 // Forward declarations
 void acknowledgeCommand(int command_id, const char* status);
@@ -172,13 +183,10 @@ void pollAndExecuteCommands() {
         Serial.println("[CMD] action=" + action + " id=" + String(command_id));
 
         if (action == "turn_on") {
-            pinMode(RELAY_PIN, OUTPUT);
-            digitalWrite(RELAY_PIN, LOW);   // Active LOW: LOW = pump ON
-            pumpState = true;
+            setRelay(true);
             Serial.println("[RELAY] Pump ON");
         } else if (action == "turn_off") {
-            pinMode(RELAY_PIN, INPUT_PULLUP); // Pull-up raises IN to ~4.96V, opto off, pump OFF
-            pumpState = false;
+            setRelay(false);
             Serial.println("[RELAY] Pump OFF");
         } else {
             Serial.println("[CMD] Unknown action: " + action);
@@ -241,7 +249,7 @@ void setup() {
     pinMode(MOISTURE_DO_PIN, INPUT);
     pinMode(TRIG_PIN,  OUTPUT);
     pinMode(ECHO_PIN,  INPUT);
-    pinMode(RELAY_PIN, INPUT_PULLUP); // Pump OFF on boot: pull-up raises IN to ~4.96V, opto off
+    setRelay(false);
 
     dht.begin();
 
