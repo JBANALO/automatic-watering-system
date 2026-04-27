@@ -1907,6 +1907,17 @@
                                 Auto-only mode is enabled. Pump control is fully automatic based on soil moisture.
                             </div>
 
+                            <div style="background: #fff7ed; border: 1px solid #fed7aa; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                                <div style="font-weight: 600; color: #9a3412; margin-bottom: 6px;">Manual Override (Device API Key)</div>
+                                <input id="pumpApiKeyInput" type="password" placeholder="Enter device API key" style="width: 100%; padding: 10px; border: 1px solid #fdba74; border-radius: 6px; margin-bottom: 8px; font-size: 0.9em;">
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="sendPumpCommand('turn_on')" style="flex: 1; background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 8px 10px; font-weight: 600; cursor: pointer;">Force ON</button>
+                                    <button onclick="sendPumpCommand('turn_off')" style="flex: 1; background: #1f2937; color: #fff; border: none; border-radius: 6px; padding: 8px 10px; font-weight: 600; cursor: pointer;">Force OFF</button>
+                                </div>
+                                <div id="pumpCommandStatus" style="margin-top: 6px; font-size: 0.85em; color: #9a3412;"></div>
+                                <div style="font-size: 0.8em; color: #9a3412; margin-top: 6px;">Auto mode may override manual commands based on moisture threshold.</div>
+                            </div>
+
                             <div class="stats">
                                 <div class="stat-box">
                                     <div class="stat-value" id="dailyUsage">245</div>
@@ -2823,6 +2834,8 @@
 
                     document.getElementById('dashboard').style.display = 'flex';
 
+                    initPumpOverrideKey();
+
                     await Promise.all([loadZones(), loadSystemSettings()]);
                     await loadSensorData();
                     loadSavedSchedules();
@@ -3510,6 +3523,74 @@
                 }
             } catch (error) {
                 console.error('Error updating threshold:', error);
+            }
+        }
+
+        function initPumpOverrideKey() {
+            const input = document.getElementById('pumpApiKeyInput');
+            if (!input) {
+                return;
+            }
+
+            const savedKey = localStorage.getItem('pumpApiKey');
+            if (savedKey) {
+                input.value = savedKey;
+            }
+
+            input.addEventListener('input', () => {
+                const key = input.value.trim();
+                if (key) {
+                    localStorage.setItem('pumpApiKey', key);
+                } else {
+                    localStorage.removeItem('pumpApiKey');
+                }
+            });
+        }
+
+        function setPumpCommandStatus(message, isError = false) {
+            const statusEl = document.getElementById('pumpCommandStatus');
+            if (!statusEl) {
+                return;
+            }
+            statusEl.textContent = message;
+            statusEl.style.color = isError ? '#b91c1c' : '#047857';
+        }
+
+        async function sendPumpCommand(action) {
+            const input = document.getElementById('pumpApiKeyInput');
+            const apiKey = input ? input.value.trim() : '';
+            if (!apiKey) {
+                alert('Please enter the device API key first.');
+                return;
+            }
+
+            setPumpCommandStatus('Sending command...');
+
+            try {
+                const response = await fetch(API_BASE + 'device_control.php?action=send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({ command: action })
+                });
+
+                const raw = await response.text();
+                let data = null;
+                try {
+                    data = JSON.parse(raw);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON response');
+                }
+
+                if (!response.ok || data.status !== 'success') {
+                    throw new Error(data.message || 'Command failed');
+                }
+
+                setPumpCommandStatus('Command sent: ' + action);
+            } catch (error) {
+                setPumpCommandStatus('Failed: ' + error.message, true);
             }
         }
 
