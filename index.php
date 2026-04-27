@@ -1780,11 +1780,11 @@
             <!-- Sidebar Navigation -->
             <div class="sidebar">
                 <h3>Pages</h3>
-                <button class="nav-btn active" onclick="switchPage('system', this)">System Control</button>
-                <button class="nav-btn" onclick="switchPage('zones', this)">Zone Management</button>
-                <button class="nav-btn" onclick="switchPage('schedule', this)">Schedules</button>
-                <button class="nav-btn" onclick="switchPage('sensors', this)">Sensors & Weather</button>
-                <button class="nav-btn" onclick="switchPage('devices', this); loadDevices(); populateDeviceZoneSelect();">Devices</button>
+                <button class="nav-btn active" data-page="system" onclick="switchPage('system', this)">System Control</button>
+                <button class="nav-btn" data-page="zones" onclick="switchPage('zones', this)">Zone Management</button>
+                <button class="nav-btn" data-page="schedule" onclick="switchPage('schedule', this)">Schedules</button>
+                <button class="nav-btn" data-page="sensors" onclick="switchPage('sensors', this)">Sensors & Weather</button>
+                <button class="nav-btn" data-page="devices" onclick="switchPage('devices', this); loadDevices(); populateDeviceZoneSelect();">Devices</button>
             </div>
 
             <!-- Main Content Area -->
@@ -2047,22 +2047,12 @@
         // Restore last page on load
         function restoreLastPage() {
             const lastPage = localStorage.getItem('lastPage');
-            if (lastPage && lastPage !== 'system') {
-                // Find the page and button
-                const pageElement = document.getElementById(lastPage + '-page');
-                const navBtns = document.querySelectorAll('.nav-btn');
-                let targetButton = null;
-                
-                navBtns.forEach(btn => {
-                    if (btn.onclick && btn.onclick.toString().includes("'" + lastPage + "'")) {
-                        targetButton = btn;
-                    }
-                });
-                
-                if (pageElement && targetButton) {
-                    // Switch to the last page
-                    switchPage(lastPage, targetButton);
-                }
+            if (!lastPage || lastPage === 'system') return;
+            const targetButton = document.querySelector(`.nav-btn[data-page="${lastPage}"]`);
+            const pageElement = document.getElementById(lastPage + '-page');
+            if (pageElement && targetButton) {
+                switchPage(lastPage, targetButton);
+                if (lastPage === 'devices') { loadDevices(); populateDeviceZoneSelect(); }
             }
         }
 
