@@ -1,5 +1,6 @@
 <?php
-require_once '../db_config.php';\nsession_start();
+require_once '../db_config.php';
+session_start();
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
