@@ -38,9 +38,15 @@ if ($conn === false) {
     die(json_encode(['status' => 'error', 'message' => 'Database init failed']));
 }
 
-mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
-mysqli_options($conn, MYSQLI_OPT_READ_TIMEOUT, 5);
-mysqli_options($conn, MYSQLI_OPT_WRITE_TIMEOUT, 5);
+if (defined('MYSQLI_OPT_CONNECT_TIMEOUT')) {
+    mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
+}
+if (defined('MYSQLI_OPT_READ_TIMEOUT')) {
+    mysqli_options($conn, MYSQLI_OPT_READ_TIMEOUT, 5);
+}
+if (defined('MYSQLI_OPT_WRITE_TIMEOUT')) {
+    mysqli_options($conn, MYSQLI_OPT_WRITE_TIMEOUT, 5);
+}
 
 @mysqli_real_connect($conn, DB_HOST, DB_USER, DB_PASS, '', intval(DB_PORT));
 
