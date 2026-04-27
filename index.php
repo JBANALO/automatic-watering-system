@@ -2874,8 +2874,14 @@
             }
         }
 
+        let sensorLoadInFlight = false;
+
         // Load sensor data
         async function loadSensorData() {
+            if (sensorLoadInFlight) {
+                return;
+            }
+            sensorLoadInFlight = true;
             try {
                 const response = await fetch(API_BASE + 'sensors.php?action=latest');
                 const data = await response.json();
@@ -2926,6 +2932,8 @@
                 }
             } catch (error) {
                 console.error('Error loading sensor data:', error);
+            } finally {
+                sensorLoadInFlight = false;
             }
         }
 
@@ -3820,7 +3828,7 @@
                 // Always poll latest backend sensor values so dashboard stays in sync
                 // even when auto mode is disabled.
                 await loadSensorData();
-            }, 1000);
+            }, 5000);
 
             // Re-render zone timestamps every minute so "Xm ago" ticks up without refresh
             setInterval(() => {

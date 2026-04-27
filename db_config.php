@@ -267,6 +267,12 @@ class DbSessionHandler implements SessionHandlerInterface {
 $_dbSessionHandler = new DbSessionHandler($conn);
 session_set_save_handler($_dbSessionHandler, true);
 
+register_shutdown_function(function () use ($conn) {
+    if ($conn instanceof mysqli) {
+        $conn->close();
+    }
+});
+
 // Set header for JSON responses
 header('Content-Type: application/json');
 // No closing PHP tag intentionally - prevents trailing newline that breaks session cookies
