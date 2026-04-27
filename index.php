@@ -2879,7 +2879,7 @@
                     if (!zone.last_watered || zone.last_watered === '0000-00-00 00:00:00') {
                         return 'Never';
                     }
-                    const lastWatered = new Date(zone.last_watered);
+                    const lastWatered = new Date(zone.last_watered.replace(' ', 'T') + 'Z');
                     const now = new Date();
                     const diffMs = now - lastWatered;
                     const diffMins = Math.floor(diffMs / 60000);
