@@ -1,6 +1,32 @@
 <?php
 ini_set('display_errors', '0');
 error_reporting(0);
+
+// ─── Session Configuration (must run before session_start in any file) ──────
+if (session_status() === PHP_SESSION_NONE) {
+    // Use a writable session save path (Railway containers expose /tmp)
+    $sessionPath = sys_get_temp_dir();
+    if ($sessionPath && is_writable($sessionPath)) {
+        session_save_path($sessionPath);
+    }
+
+    // Detect HTTPS (Railway terminates TLS and forwards via X-Forwarded-Proto)
+    $isHttps = (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+        (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ||
+        (($_SERVER['SERVER_PORT'] ?? '') == 443)
+    );
+
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isHttps,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
 // Database Configuration
 // For local: use hardcoded values
 // For Railway: parse MYSQL_URL environment variable
