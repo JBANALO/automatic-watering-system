@@ -3658,7 +3658,7 @@
                 // Always poll latest backend sensor values so dashboard stays in sync
                 // even when auto mode is disabled.
                 await loadSensorData();
-            }, 3000);
+            }, 1000);
         }
 
         // ── Devices ──────────────────────────────────────────────────────────────
