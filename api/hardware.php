@@ -178,6 +178,11 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
         return ['queued' => false, 'action' => null, 'reason' => 'insert_failed'];
     }
 
+    // Update last watered timestamp when pump is turned on
+    if ($desiredAction === 'turn_on') {
+        $conn->query("UPDATE zones SET last_watered = NOW() WHERE id = $zone_id");
+    }
+
     return [
         'queued' => true,
         'action' => $desiredAction,
@@ -241,6 +246,7 @@ function checkAndQueueSchedule($conn, $device, $zone_id) {
             $ins = $conn->prepare("INSERT INTO commands (zone_id, device_id, command_type, params) VALUES (?, ?, 'turn_on', ?)");
             $ins->bind_param("iis", $zone_id, $device_id, $params);
             $ins->execute();
+            $conn->query("UPDATE zones SET last_watered = NOW() WHERE id = $zone_id");
         }
     } else {
         // Outside window: if last turn_on was from a schedule, turn off
