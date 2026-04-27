@@ -3659,6 +3659,16 @@
                 // even when auto mode is disabled.
                 await loadSensorData();
             }, 1000);
+
+            // Re-render zone timestamps every minute so "Xm ago" ticks up without refresh
+            setInterval(() => {
+                renderZones();
+            }, 60000);
+
+            // Reload zone data from server every 10s to pick up new last_watered after watering
+            setInterval(async () => {
+                await loadZones();
+            }, 10000);
         }
 
         // ── Devices ──────────────────────────────────────────────────────────────
