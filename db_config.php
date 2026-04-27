@@ -45,7 +45,10 @@ if (defined('MYSQLI_OPT_READ_TIMEOUT')) {
     mysqli_options($conn, MYSQLI_OPT_READ_TIMEOUT, 5);
 }
 if (defined('MYSQLI_OPT_WRITE_TIMEOUT')) {
-    mysqli_options($conn, MYSQLI_OPT_WRITE_TIMEOUT, 5);
+    $optWriteTimeout = constant('MYSQLI_OPT_WRITE_TIMEOUT');
+    if (is_int($optWriteTimeout)) {
+        mysqli_options($conn, $optWriteTimeout, 5);
+    }
 }
 
 @mysqli_real_connect($conn, DB_HOST, DB_USER, DB_PASS, '', intval(DB_PORT));
@@ -56,17 +59,27 @@ if ($conn->connect_error) {
     die(json_encode(['status' => 'error', 'message' => 'Database connection failed: ' . $conn->connect_error]));
 }
 
-// Create database if it doesn't exist
-$sql = "CREATE DATABASE IF NOT EXISTS " . DB_NAME;
-if (!$conn->query($sql)) {
-    die(json_encode(['status' => 'error', 'message' => 'Error creating database: ' . $conn->error]));
+// Avoid schema setup on production by default (can be re-enabled via DB_SETUP=1)
+$dbSetupEnv = $_ENV['DB_SETUP'] ?? getenv('DB_SETUP');
+$enableDbSetup = $dbSetupEnv !== null ? $dbSetupEnv === '1' : ($mysql_url === null);
+
+if ($enableDbSetup) {
+    // Create database if it doesn't exist
+    $sql = "CREATE DATABASE IF NOT EXISTS " . DB_NAME;
+    if (!$conn->query($sql)) {
+        die(json_encode(['status' => 'error', 'message' => 'Error creating database: ' . $conn->error]));
+    }
 }
 
 // Select the database
-$conn->select_db(DB_NAME);
+if (!$conn->select_db(DB_NAME)) {
+    http_response_code(500);
+    die(json_encode(['status' => 'error', 'message' => 'Database not found: ' . DB_NAME]));
+}
 
-// Create tables
-$tables = "
+if ($enableDbSetup) {
+    // Create tables
+    $tables = "
 CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -168,58 +181,59 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 ";
 
-if (!$conn->multi_query($tables)) {
-    error_log('Error creating tables: ' . $conn->error);
-}
+    if (!$conn->multi_query($tables)) {
+        error_log('Error creating tables: ' . $conn->error);
+    }
 
-// Consume all results
-while ($conn->next_result()) {
-    if ($conn->more_results()) {
-        if ($result = $conn->store_result()) {
-            $result->free();
+    // Consume all results
+    while ($conn->next_result()) {
+        if ($conn->more_results()) {
+            if ($result = $conn->store_result()) {
+                $result->free();
+            }
         }
     }
-}
 
-// Add missing columns to users table if they don't exist
-// Check which columns exist first
-$result = $conn->query("DESCRIBE users");
-$existingColumns = [];
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $existingColumns[] = $row['Field'];
+    // Add missing columns to users table if they don't exist
+    // Check which columns exist first
+    $result = $conn->query("DESCRIBE users");
+    $existingColumns = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $existingColumns[] = $row['Field'];
+        }
     }
-}
 
-$columnsToAdd = [
-    'first_name' => "ALTER TABLE users ADD COLUMN first_name VARCHAR(100)",
-    'last_name' => "ALTER TABLE users ADD COLUMN last_name VARCHAR(100)",
-    'middle_name' => "ALTER TABLE users ADD COLUMN middle_name VARCHAR(100) NULL",
-    'birthdate' => "ALTER TABLE users ADD COLUMN birthdate DATE NULL",
-    'email_verified' => "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0",
-    'verification_code' => "ALTER TABLE users ADD COLUMN verification_code VARCHAR(255)",
-    'verification_code_expires' => "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME",
-    'password_reset_code' => "ALTER TABLE users ADD COLUMN password_reset_code VARCHAR(255)",
-    'password_reset_expires' => "ALTER TABLE users ADD COLUMN password_reset_expires DATETIME"
-];
+    $columnsToAdd = [
+        'first_name' => "ALTER TABLE users ADD COLUMN first_name VARCHAR(100)",
+        'last_name' => "ALTER TABLE users ADD COLUMN last_name VARCHAR(100)",
+        'middle_name' => "ALTER TABLE users ADD COLUMN middle_name VARCHAR(100) NULL",
+        'birthdate' => "ALTER TABLE users ADD COLUMN birthdate DATE NULL",
+        'email_verified' => "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0",
+        'verification_code' => "ALTER TABLE users ADD COLUMN verification_code VARCHAR(255)",
+        'verification_code_expires' => "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME",
+        'password_reset_code' => "ALTER TABLE users ADD COLUMN password_reset_code VARCHAR(255)",
+        'password_reset_expires' => "ALTER TABLE users ADD COLUMN password_reset_expires DATETIME"
+    ];
 
-foreach ($columnsToAdd as $columnName => $alterSQL) {
-    if (!in_array($columnName, $existingColumns)) {
-        $conn->query($alterSQL);
+    foreach ($columnsToAdd as $columnName => $alterSQL) {
+        if (!in_array($columnName, $existingColumns)) {
+            $conn->query($alterSQL);
+        }
     }
-}
 
-// Add missing columns to zones table if they don't exist
-$zoneDescribe = $conn->query("DESCRIBE zones");
-$zoneColumns = [];
-if ($zoneDescribe) {
-    while ($row = $zoneDescribe->fetch_assoc()) {
-        $zoneColumns[] = $row['Field'];
+    // Add missing columns to zones table if they don't exist
+    $zoneDescribe = $conn->query("DESCRIBE zones");
+    $zoneColumns = [];
+    if ($zoneDescribe) {
+        while ($row = $zoneDescribe->fetch_assoc()) {
+            $zoneColumns[] = $row['Field'];
+        }
     }
-}
 
-if (!in_array('last_watered', $zoneColumns)) {
-    $conn->query("ALTER TABLE zones ADD COLUMN last_watered TIMESTAMP NULL");
+    if (!in_array('last_watered', $zoneColumns)) {
+        $conn->query("ALTER TABLE zones ADD COLUMN last_watered TIMESTAMP NULL");
+    }
 }
 
 // Database-backed session handler for Railway (prevents session loss on container restart)

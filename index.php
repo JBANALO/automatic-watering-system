@@ -2823,8 +2823,7 @@
 
                     document.getElementById('dashboard').style.display = 'flex';
 
-                    await loadZones();
-                    await loadSystemSettings();
+                    await Promise.all([loadZones(), loadSystemSettings()]);
                     await loadSensorData();
                     loadSavedSchedules();
 
