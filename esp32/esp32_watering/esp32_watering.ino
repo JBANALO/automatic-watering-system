@@ -76,11 +76,12 @@ void applyAutoLogic() {
 
     if (!pumpState && lastMoisture < moistureThreshold) {
         pinMode(RELAY_PIN, OUTPUT);
-        digitalWrite(RELAY_PIN, LOW);
+        digitalWrite(RELAY_PIN, HIGH);  // Active HIGH relay: HIGH = pump ON
         pumpState = true;
         Serial.println("[AUTO] Moisture " + String(lastMoisture) + "% < threshold " + String(moistureThreshold) + "% — Pump ON");
     } else if (pumpState && lastMoisture >= 70) {
-        pinMode(RELAY_PIN, INPUT);
+        pinMode(RELAY_PIN, OUTPUT);
+        digitalWrite(RELAY_PIN, LOW);   // Active HIGH relay: LOW = pump OFF
         pumpState = false;
         Serial.println("[AUTO] Moisture " + String(lastMoisture) + "% >= 70% — Pump OFF");
     }
@@ -201,11 +202,12 @@ void pollAndExecuteCommands() {
 
         if (action == "turn_on") {
             pinMode(RELAY_PIN, OUTPUT);
-            digitalWrite(RELAY_PIN, LOW);   // Active LOW relay: LOW = pump ON
+            digitalWrite(RELAY_PIN, HIGH);  // Active HIGH relay: HIGH = pump ON
             pumpState = true;
             Serial.println("[RELAY] Pump ON");
         } else if (action == "turn_off") {
-            pinMode(RELAY_PIN, INPUT);      // High-Z: lets relay internal pull-up de-energize coil
+            pinMode(RELAY_PIN, OUTPUT);
+            digitalWrite(RELAY_PIN, LOW);   // Active HIGH relay: LOW = pump OFF
             pumpState = false;
             Serial.println("[RELAY] Pump OFF");
         } else {
@@ -269,7 +271,8 @@ void setup() {
     pinMode(MOISTURE_DO_PIN, INPUT);
     pinMode(TRIG_PIN,  OUTPUT);
     pinMode(ECHO_PIN,  INPUT);
-    pinMode(RELAY_PIN, INPUT);      // Pump OFF on boot: high-Z lets relay internal pull-up de-energize
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW);   // Pump OFF on boot (active HIGH relay)
 
     dht.begin();
 

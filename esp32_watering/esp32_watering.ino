@@ -173,11 +173,11 @@ void pollAndExecuteCommands() {
 
         if (action == "turn_on") {
             pinMode(RELAY_PIN, OUTPUT);
-            digitalWrite(RELAY_PIN, LOW);   // Active LOW relay: LOW = pump ON
+            digitalWrite(RELAY_PIN, LOW);   // Active LOW: LOW = pump ON
             pumpState = true;
             Serial.println("[RELAY] Pump ON");
         } else if (action == "turn_off") {
-            pinMode(RELAY_PIN, INPUT);      // High-Z: lets relay internal pull-up de-energize coil
+            pinMode(RELAY_PIN, INPUT_PULLUP); // Pull-up raises IN to ~4.96V, opto off, pump OFF
             pumpState = false;
             Serial.println("[RELAY] Pump OFF");
         } else {
@@ -241,7 +241,7 @@ void setup() {
     pinMode(MOISTURE_DO_PIN, INPUT);
     pinMode(TRIG_PIN,  OUTPUT);
     pinMode(ECHO_PIN,  INPUT);
-    pinMode(RELAY_PIN, INPUT);      // Pump OFF on boot: high-Z lets relay internal pull-up de-energize
+    pinMode(RELAY_PIN, INPUT_PULLUP); // Pump OFF on boot: pull-up raises IN to ~4.96V, opto off
 
     dht.begin();
 
