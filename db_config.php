@@ -234,4 +234,3 @@ session_set_save_handler($_dbSessionHandler, true);
 
 // Set header for JSON responses
 header('Content-Type: application/json');
-?>
