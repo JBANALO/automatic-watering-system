@@ -59,10 +59,19 @@ function authenticateDevice($conn) {
 // Poll for pending commands
 if ($method === 'GET' && $action === 'poll') {
     $device = authenticateDevice($conn);
-    $zone_id = $device['zone_id'];
-    
+    $zone_id  = $device['zone_id'];
+    $user_id  = $device['user_id'];
+
+    // Fetch auto mode settings so ESP32 can act locally without a server roundtrip
+    $sres = $conn->query("SELECT auto_mode, moisture_threshold FROM system_settings WHERE user_id=$user_id");
+    $settings = ['auto_mode' => 0, 'moisture_threshold' => 50];
+    if ($sres && $sres->num_rows > 0) {
+        $row = $sres->fetch_assoc();
+        $settings = ['auto_mode' => (int)$row['auto_mode'], 'moisture_threshold' => (int)$row['moisture_threshold']];
+    }
+
     if (empty($zone_id)) {
-        echo json_encode(['status' => 'success', 'commands' => []]);
+        echo json_encode(['status' => 'success', 'commands' => [], 'settings' => $settings]);
         exit;
     }
     
@@ -96,7 +105,8 @@ if ($method === 'GET' && $action === 'poll') {
     echo json_encode([
         'status' => 'success',
         'commands' => $commands,
-        'count' => count($commands)
+        'count' => count($commands),
+        'settings' => $settings
     ]);
 }
 

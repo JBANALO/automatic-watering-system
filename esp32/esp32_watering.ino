@@ -54,6 +54,9 @@ DHT dht(DHT_PIN, DHT_TYPE);
 unsigned long lastSubmit = 0;
 unsigned long lastPoll   = 0;
 bool pumpState = false;  // Track actual relay state
+bool autoMode = false;   // Cached from server settings
+int  moistureThreshold = 50; // Cached from server settings
+int  lastMoisture = -1;  // Last read moisture value
 
 // Forward declarations
 void acknowledgeCommand(int command_id, const char* status);
@@ -64,6 +67,23 @@ int readMoisture() {
     int d0 = digitalRead(MOISTURE_DO_PIN);
     // D0: LOW = wet (100%), HIGH = dry (0%)
     return (d0 == LOW) ? 100 : 0;
+}
+
+// ─── Local Auto Logic ─────────────────────────────────────────────────────────
+// Runs immediately after sensor read — no server roundtrip needed
+void applyAutoLogic() {
+    if (!autoMode || lastMoisture < 0) return;
+
+    if (!pumpState && lastMoisture < moistureThreshold) {
+        pinMode(RELAY_PIN, OUTPUT);
+        digitalWrite(RELAY_PIN, LOW);
+        pumpState = true;
+        Serial.println("[AUTO] Moisture " + String(lastMoisture) + "% < threshold " + String(moistureThreshold) + "% — Pump ON");
+    } else if (pumpState && lastMoisture >= 70) {
+        pinMode(RELAY_PIN, INPUT);
+        pumpState = false;
+        Serial.println("[AUTO] Moisture " + String(lastMoisture) + "% >= 70% — Pump OFF");
+    }
 }
 
 int readTankLevel() {
@@ -90,6 +110,7 @@ void submitSensorData() {
     float temperature = dht.readTemperature();
     float humidity    = dht.readHumidity();
     int   moisture    = readMoisture();
+    lastMoisture = moisture;  // Cache for local auto logic
     int   tank_level  = readTankLevel();
 
     bool dhtOk = !isnan(temperature) && !isnan(humidity);
@@ -157,6 +178,13 @@ void pollAndExecuteCommands() {
     if (err) {
         Serial.println("[POLL] JSON parse error: " + String(err.c_str()));
         return;
+    }
+
+    // Update local settings cache from server
+    if (doc.containsKey("settings")) {
+        autoMode = doc["settings"]["auto_mode"].as<int>() == 1;
+        moistureThreshold = doc["settings"]["moisture_threshold"].as<int>();
+        Serial.println("[SETTINGS] autoMode=" + String(autoMode) + " threshold=" + String(moistureThreshold));
     }
 
     JsonArray commands = doc["commands"].as<JsonArray>();
@@ -265,6 +293,7 @@ void loop() {
     if (now - lastSubmit >= SUBMIT_INTERVAL) {
         lastSubmit = now;
         submitSensorData();
+        applyAutoLogic();  // Act immediately after sensor read — no server roundtrip
     }
 
     if (now - lastPoll >= POLL_INTERVAL) {
