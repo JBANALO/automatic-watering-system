@@ -295,9 +295,14 @@ $conn->query("CREATE TABLE IF NOT EXISTS sessions (
 $_dbSessionHandler = new DbSessionHandler($conn);
 session_set_save_handler($_dbSessionHandler, true);
 
+// Make sure session data is written via the DB handler before the connection closes
 register_shutdown_function(function () use ($conn) {
+    // Persist session BEFORE closing the DB connection (otherwise DbSessionHandler::write fails silently)
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
     if ($conn instanceof mysqli) {
-        $conn->close();
+        @$conn->close();
     }
 });
 
