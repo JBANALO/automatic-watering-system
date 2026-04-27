@@ -1598,7 +1598,7 @@
 </head>
 <body>
     <!-- Login/Register Section -->
-    <div id="authSection" class="auth-container">
+    <div id="authSection" class="auth-container" style="display: none;">
         <div class="auth-card">
             <h1> Irrigation</h1>
             <p class="subtitle">Smart Garden Control</p>
@@ -2670,6 +2670,10 @@
                     currentUser = userData.user;
                     document.getElementById('userNameDisplay').textContent = '👤 ' + currentUser.username;
                     document.getElementById('authSection').style.display = 'none';
+
+                    // Restore last visited page BEFORE showing dashboard so the correct tab is already active
+                    restoreLastPage();
+
                     document.getElementById('dashboard').style.display = 'flex';
 
                     await loadZones();
@@ -2678,9 +2682,6 @@
                     loadSavedSchedules();
 
                     startAutoMonitoring();
-                    
-                    // Restore last visited page
-                    restoreLastPage();
                 }
             } catch (error) {
                 showError('Failed to load dashboard');
