@@ -2086,6 +2086,7 @@
         let systemSettings = {};
         let currentTankLevel = 100;
         let hasLiveTankLevel = false;
+        let latestSensor = null;
         let systemStartTime = null;
         let systemTimer = null;
         let litersPerMinute = 8; // 8 liters per minute (adjustable)
@@ -2864,7 +2865,7 @@
                 const response = await fetch(API_BASE + 'sensors.php?action=latest');
                 const data = await response.json();
                 if (data.status === 'success') {
-                    let latestSensor = null;
+                    latestSensor = null;
                     data.sensors.forEach(sensor => {
                         const sensorZoneId = parseInt(sensor.zone_id ?? sensor.id, 10);
                         const zone = zones.find(z => parseInt(z.id, 10) === sensorZoneId);
@@ -3065,6 +3066,7 @@
             }).join('');
 
             updateUISettings();
+            updateZoneTankAndPump(latestSensor);
         }
 
         // Update UI settings
