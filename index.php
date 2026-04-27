@@ -1659,7 +1659,9 @@
                     <label for="loginPassword">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="loginPassword" placeholder="Enter password">
-                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('loginPassword', this)">👁</button>
+                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('loginPassword', this)" style="display:flex;align-items:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
                 <button class="btn-login" onclick="handleLogin()">Sign In</button>
@@ -1716,7 +1718,9 @@
                     <label for="regPassword">Password <span style="color:#ef4444;">*</span></label>
                     <div class="password-wrapper">
                         <input type="password" id="regPassword" placeholder="Enter password" oninput="checkPasswordStrength(this.value)">
-                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('regPassword', this)">👁</button>
+                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('regPassword', this)" style="display:flex;align-items:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                     <div class="strength-bar-wrap">
                         <div class="strength-bar" id="strengthBar"></div>
@@ -1727,7 +1731,9 @@
                     <label for="regConfirmPassword">Confirm Password <span style="color:#ef4444;">*</span></label>
                     <div class="password-wrapper">
                         <input type="password" id="regConfirmPassword" placeholder="Re-enter password">
-                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('regConfirmPassword', this)">👁</button>
+                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('regConfirmPassword', this)" style="display:flex;align-items:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
                 <button class="btn-login" onclick="handleRegister()">Create Account</button>
@@ -2280,14 +2286,17 @@
             }
         }
 
+        const EYE_OPEN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        const EYE_CLOSED = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
         function togglePasswordVisibility(inputId, btn) {
             const input = document.getElementById(inputId);
             if (input.type === 'password') {
                 input.type = 'text';
-                btn.textContent = '🙈';
+                btn.innerHTML = EYE_CLOSED;
             } else {
                 input.type = 'password';
-                btn.textContent = '👁';
+                btn.innerHTML = EYE_OPEN;
             }
         }
 
