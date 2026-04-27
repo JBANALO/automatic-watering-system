@@ -41,7 +41,51 @@
             border-radius: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 400px;
+            max-width: 520px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .form-row-3 .form-group { margin-bottom: 0; }
+        @media (max-width: 600px) {
+            .form-row-3 { grid-template-columns: 1fr; }
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 42px;
+        }
+        .eye-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            font-size: 1em;
+            padding: 0;
+        }
+        .eye-toggle:hover { color: #667eea; }
+
+        .strength-bar-wrap { margin-top: 5px; }
+        .strength-bar {
+            height: 5px;
+            border-radius: 3px;
+            transition: width 0.3s, background 0.3s;
+            width: 0;
+        }
+        .strength-label {
+            font-size: 0.78em;
+            margin-top: 3px;
+            font-weight: 600;
         }
 
         .auth-card h1 {
@@ -1643,19 +1687,19 @@
                     <label for="regUsername">Username</label>
                     <input type="text" id="regUsername" placeholder="Choose username">
                 </div>
-                <div class="form-row">
+                <div class="form-row-3">
                     <div class="form-group">
                         <label for="regFirstName">First Name</label>
                         <input type="text" id="regFirstName" placeholder="First name">
                     </div>
                     <div class="form-group">
+                        <label for="regMiddleName">Middle Name <span style="color:#aaa;font-size:0.78em;">(optional)</span></label>
+                        <input type="text" id="regMiddleName" placeholder="Middle name">
+                    </div>
+                    <div class="form-group">
                         <label for="regLastName">Last Name</label>
                         <input type="text" id="regLastName" placeholder="Last name">
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="regMiddleName">Middle Name <span style="color:#aaa;font-size:0.85em;">(optional)</span></label>
-                    <input type="text" id="regMiddleName" placeholder="Middle name">
                 </div>
                 <div class="form-group">
                     <label for="regBirthdate">Birthdate</label>
@@ -1667,7 +1711,21 @@
                 </div>
                 <div class="form-group">
                     <label for="regPassword">Password</label>
-                    <input type="password" id="regPassword" placeholder="Enter password">
+                    <div class="password-wrapper">
+                        <input type="password" id="regPassword" placeholder="Enter password" oninput="checkPasswordStrength(this.value)">
+                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('regPassword', this)">👁</button>
+                    </div>
+                    <div class="strength-bar-wrap">
+                        <div class="strength-bar" id="strengthBar"></div>
+                        <div class="strength-label" id="strengthLabel"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="regConfirmPassword">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="regConfirmPassword" placeholder="Re-enter password">
+                        <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('regConfirmPassword', this)">👁</button>
+                    </div>
                 </div>
                 <button class="btn-login" onclick="handleRegister()">Create Account</button>
 
@@ -2219,6 +2277,39 @@
             }
         }
 
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+            }
+        }
+
+        function checkPasswordStrength(val) {
+            const bar = document.getElementById('strengthBar');
+            const label = document.getElementById('strengthLabel');
+            if (!bar || !label) return;
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            const levels = [
+                { label: '', color: '', width: '0%' },
+                { label: 'Weak', color: '#ef4444', width: '33%' },
+                { label: 'Medium', color: '#f59e0b', width: '66%' },
+                { label: 'Strong', color: '#22c55e', width: '100%' }
+            ];
+            const lvl = val.length === 0 ? 0 : score <= 1 ? 1 : score <= 2 ? 2 : 3;
+            bar.style.width = levels[lvl].width;
+            bar.style.background = levels[lvl].color;
+            label.textContent = levels[lvl].label;
+            label.style.color = levels[lvl].color;
+        }
+
         // Handle registration
         async function handleRegister() {
             const username = document.getElementById('regUsername').value;
@@ -2228,9 +2319,15 @@
             const birthdate = document.getElementById('regBirthdate').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-            if (!username || !firstName || !lastName || !birthdate || !email || !password) {
+            if (!username || !firstName || !lastName || !birthdate || !email || !password || !confirmPassword) {
                 showError('Please fill all required fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match.');
                 return;
             }
 
