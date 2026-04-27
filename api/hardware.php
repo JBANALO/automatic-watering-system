@@ -152,7 +152,7 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
 
     // Cancel any stale pending opposing commands to prevent relay state mismatch
     $opposingAction = ($desiredAction === 'turn_on') ? 'turn_off' : 'turn_on';
-    $cancel = $conn->prepare("UPDATE commands SET status='cancelled' WHERE zone_id=? AND command_type=? AND status='pending'");
+    $cancel = $conn->prepare("UPDATE commands SET status='failed' WHERE zone_id=? AND command_type=? AND status='pending'");
     if ($cancel) {
         $cancel->bind_param("is", $zone_id, $opposingAction);
         $cancel->execute();
@@ -241,7 +241,7 @@ function checkAndQueueSchedule($conn, $device, $zone_id) {
         $alreadyOn = ($lastCmd && $lastCmd['command_type'] === 'turn_on') || $pendingAction === 'turn_on';
         if (!$alreadyOn) {
             // Cancel any pending turn_off
-            $conn->query("UPDATE commands SET status='cancelled' WHERE zone_id=$zone_id AND command_type='turn_off' AND status='pending'");
+            $conn->query("UPDATE commands SET status='failed' WHERE zone_id=$zone_id AND command_type='turn_off' AND status='pending'");
             $params = json_encode(['source' => 'schedule', 'schedule_id' => $activeScheduleId]);
             $ins = $conn->prepare("INSERT INTO commands (zone_id, device_id, command_type, params) VALUES (?, ?, 'turn_on', ?)");
             $ins->bind_param("iis", $zone_id, $device_id, $params);
