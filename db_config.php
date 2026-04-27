@@ -31,11 +31,22 @@ define('DB_PASS', $pass);
 define('DB_NAME', $db);
 define('DB_PORT', $port);
 
-// Create connection with port
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, '', intval(DB_PORT));
+// Create connection with timeouts to prevent hanging requests
+$conn = mysqli_init();
+if ($conn === false) {
+    http_response_code(500);
+    die(json_encode(['status' => 'error', 'message' => 'Database init failed']));
+}
+
+mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
+mysqli_options($conn, MYSQLI_OPT_READ_TIMEOUT, 5);
+mysqli_options($conn, MYSQLI_OPT_WRITE_TIMEOUT, 5);
+
+@mysqli_real_connect($conn, DB_HOST, DB_USER, DB_PASS, '', intval(DB_PORT));
 
 // Check connection
 if ($conn->connect_error) {
+    http_response_code(500);
     die(json_encode(['status' => 'error', 'message' => 'Database connection failed: ' . $conn->connect_error]));
 }
 
