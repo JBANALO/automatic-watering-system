@@ -57,7 +57,7 @@ function getAutoDecision($moisture, $tank_level, $threshold) {
     return ['action' => null, 'lower' => $lowerThreshold, 'upper' => $upperThreshold, 'reason' => 'hysteresis_hold'];
 }
 
-function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level) {
+function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level, $pump_state = null) {
     $user_id = intval($device['user_id']);
     $minimumOnSeconds = 5;
 
@@ -134,13 +134,19 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
         }
 
         if ($lastRow && ($lastRow['command_type'] ?? '') === $desiredAction) {
-            return [
-                'queued' => false,
-                'action' => $desiredAction,
-                'reason' => 'already_in_state',
-                'lower_threshold' => $decision['lower'],
-                'upper_threshold' => $decision['upper']
-            ];
+            // Override dedup if ESP32 reports actual pump state disagrees (e.g. reboot reset relay)
+            $pumpIsOn = ($pump_state === 1 || $pump_state === true);
+            $desyncDetected = ($desiredAction === 'turn_on' && !$pumpIsOn && $pump_state !== null)
+                           || ($desiredAction === 'turn_off' && $pumpIsOn && $pump_state !== null);
+            if (!$desyncDetected) {
+                return [
+                    'queued' => false,
+                    'action' => $desiredAction,
+                    'reason' => 'already_in_state',
+                    'lower_threshold' => $decision['lower'],
+                    'upper_threshold' => $decision['upper']
+                ];
+            }
         }
     }
 
@@ -246,6 +252,7 @@ if ($method === 'POST' && $action === 'submit') {
     $temperature = (isset($input['temperature']) && $input['temperature'] !== '') ? floatval($input['temperature']) : null;
     $humidity = (isset($input['humidity']) && $input['humidity'] !== '') ? intval($input['humidity']) : null;
     $tank_level = (isset($input['tank_level']) && $input['tank_level'] !== '') ? intval($input['tank_level']) : null;
+    $pump_state = isset($input['pump_state']) ? intval($input['pump_state']) : null;
     
     // Validate ranges
     $moisture = min(100, max(0, $moisture));
@@ -282,7 +289,7 @@ if ($method === 'POST' && $action === 'submit') {
             $update->execute();
 
             // Auto-control: queue relay command based on latest moisture and system settings.
-            $autoResult = queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level);
+            $autoResult = queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level, $pump_state);
             
             echo json_encode([
                 'status' => 'success',
