@@ -2682,9 +2682,12 @@
                     loadSavedSchedules();
 
                     startAutoMonitoring();
+                } else {
+                    throw new Error('Not authenticated');
                 }
             } catch (error) {
-                showError('Failed to load dashboard');
+                document.getElementById('authSection').style.display = 'flex';
+                throw error;
             }
         }
 
