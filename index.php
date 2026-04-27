@@ -2898,16 +2898,20 @@
                             }
                         }
 
-                        // Update tank level from API only if system is NOT running
-                        // While system is running, tank level is calculated in real-time
-                        if (!systemRunning && sensor.tank_level !== undefined && sensor.tank_level !== null) {
-                            currentTankLevel = sensor.tank_level;
-                            hasLiveTankLevel = true;
-                        }
                     });
 
                     if (latestSensor) {
                         updateWeatherStats(latestSensor);
+                    }
+
+                    const latestTank = latestSensor?.tank_level;
+                    if (latestTank !== undefined && latestTank !== null && latestTank !== '') {
+                        hasLiveTankLevel = true;
+                        if (!systemRunning) {
+                            currentTankLevel = Number(latestTank);
+                        }
+                    } else {
+                        hasLiveTankLevel = false;
                     }
 
                     updateZoneMoisture();
@@ -2918,9 +2922,7 @@
                         checkAutoMode(latestSensor);
                     }
                     // Only update display if system is not running
-                    if (!systemRunning) {
-                        updateTankLevel();
-                    }
+                    updateTankLevel(latestSensor);
                 }
             } catch (error) {
                 console.error('Error loading sensor data:', error);
@@ -2943,19 +2945,38 @@
         }
 
         // Update tank level display
-        function updateTankLevel() {
+        function resolveTankLevel(sensor = null) {
+            if (systemRunning) {
+                const runningLevel = Number(currentTankLevel);
+                return Number.isFinite(runningLevel) ? runningLevel : null;
+            }
+
+            const rawLevel = sensor && sensor.tank_level !== undefined && sensor.tank_level !== null && sensor.tank_level !== ''
+                ? sensor.tank_level
+                : null;
+            if (rawLevel === null) {
+                return null;
+            }
+
+            const level = Number(rawLevel);
+            return Number.isFinite(level) ? level : null;
+        }
+
+        function updateTankLevel(sensor = null) {
             const tankLevelEl = document.getElementById('tankLevel');
             if (tankLevelEl) {
-                if (!systemRunning && !hasLiveTankLevel) {
+                const tankLevel = resolveTankLevel(sensor);
+                if (tankLevel === null && !systemRunning) {
                     tankLevelEl.textContent = 'Inactive';
                     tankLevelEl.style.color = '#9ca3af';
                     return;
                 }
 
-                tankLevelEl.textContent = currentTankLevel + '%';
-                if (currentTankLevel >= 65) {
+                const displayLevel = tankLevel === null ? currentTankLevel : tankLevel;
+                tankLevelEl.textContent = displayLevel + '%';
+                if (displayLevel >= 65) {
                     tankLevelEl.style.color = '#667eea';
-                } else if (currentTankLevel >= 30) {
+                } else if (displayLevel >= 30) {
                     tankLevelEl.style.color = '#f59e0b'; 
                 } else {
                     tankLevelEl.style.color = '#ef4444';
@@ -3355,21 +3376,21 @@
                 if (tankEl) {
                     // During active runtime, use calculated live tank level.
                     // Otherwise, use latest sensor tank value when available.
-                    const tankSource = systemRunning
-                        ? currentTankLevel
-                        : (sensor && sensor.tank_level !== undefined && sensor.tank_level !== null
-                            ? sensor.tank_level
-                            : currentTankLevel);
-
-                    const tankLevel = Number(tankSource);
-                    tankEl.textContent = tankLevel + '%';
-                    // Color code: blue (>65%), orange (30-65%), red (<30%)
-                    if (tankLevel >= 65) {
-                        tankEl.style.color = '#667eea';
-                    } else if (tankLevel >= 30) {
-                        tankEl.style.color = '#f59e0b';
+                    const tankLevel = resolveTankLevel(sensor);
+                    if (tankLevel === null && !systemRunning) {
+                        tankEl.textContent = 'Inactive';
+                        tankEl.style.color = '#9ca3af';
                     } else {
-                        tankEl.style.color = '#ef4444';
+                        const displayLevel = tankLevel === null ? currentTankLevel : tankLevel;
+                        tankEl.textContent = displayLevel + '%';
+                        // Color code: blue (>65%), orange (30-65%), red (<30%)
+                        if (displayLevel >= 65) {
+                            tankEl.style.color = '#667eea';
+                        } else if (displayLevel >= 30) {
+                            tankEl.style.color = '#f59e0b';
+                        } else {
+                            tankEl.style.color = '#ef4444';
+                        }
                     }
                 }
                 
