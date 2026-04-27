@@ -140,6 +140,13 @@ CREATE TABLE IF NOT EXISTS commands (
     FOREIGN KEY (zone_id) REFERENCES zones(id) ON DELETE CASCADE,
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    data TEXT,
+    expires DATETIME NOT NULL,
+    INDEX idx_expires (expires)
+);
 ";
 
 if (!$conn->multi_query($tables)) {
@@ -193,6 +200,37 @@ if ($zoneDescribe) {
 if (!in_array('last_watered', $zoneColumns)) {
     $conn->query("ALTER TABLE zones ADD COLUMN last_watered TIMESTAMP NULL");
 }
+
+// Database-backed session handler for Railway (prevents session loss on container restart)
+class DbSessionHandler implements SessionHandlerInterface {
+    private $conn;
+    public function __construct($conn) { $this->conn = $conn; }
+    public function open($path, $name) { return true; }
+    public function close() { return true; }
+    public function read($id) {
+        $id = $this->conn->real_escape_string($id);
+        $result = $this->conn->query("SELECT data FROM sessions WHERE id='$id' AND expires > NOW()");
+        if ($result && $result->num_rows > 0) return $result->fetch_assoc()['data'];
+        return '';
+    }
+    public function write($id, $data) {
+        $id   = $this->conn->real_escape_string($id);
+        $data = $this->conn->real_escape_string($data);
+        $this->conn->query("INSERT INTO sessions (id, data, expires) VALUES ('$id', '$data', DATE_ADD(NOW(), INTERVAL 1 DAY)) ON DUPLICATE KEY UPDATE data='$data', expires=DATE_ADD(NOW(), INTERVAL 1 DAY)");
+        return true;
+    }
+    public function destroy($id) {
+        $id = $this->conn->real_escape_string($id);
+        $this->conn->query("DELETE FROM sessions WHERE id='$id'");
+        return true;
+    }
+    public function gc($maxlifetime) {
+        $this->conn->query("DELETE FROM sessions WHERE expires < NOW()");
+        return true;
+    }
+}
+$_dbSessionHandler = new DbSessionHandler($conn);
+session_set_save_handler($_dbSessionHandler, true);
 
 // Set header for JSON responses
 header('Content-Type: application/json');

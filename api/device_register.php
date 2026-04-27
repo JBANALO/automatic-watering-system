@@ -6,8 +6,7 @@
  * Requires user authentication (session-based)
  */
 
-session_start();
-require_once '../db_config.php';
+require_once '../db_config.php';\nsession_start();
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);

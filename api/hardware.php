@@ -289,7 +289,7 @@ if ($method === 'POST' && $action === 'submit') {
             $update->execute();
 
             // Auto-control: queue relay command based on latest moisture and system settings.
-            $autoResult = queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level, $pump_state);
+            $autoResult = queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level);
             
             echo json_encode([
                 'status' => 'success',
