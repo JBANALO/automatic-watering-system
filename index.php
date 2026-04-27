@@ -2133,7 +2133,7 @@
             if (typeof google !== 'undefined' && google.accounts) {
                 try {
                     google.accounts.id.initialize({
-                        client_id: '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com',
+                        client_id: '733998011689-eftqrm2jtda6tclund83kv6vg95t85r3.apps.googleusercontent.com',
                         callback: handleCredentialResponse
                     });
                     console.log('Google Sign-In initialized');
@@ -2262,7 +2262,7 @@
             console.log('Google Sign In clicked');
             try {
                 if (typeof google !== 'undefined' && google.accounts) {
-                    const clientId = '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com';
+                    const clientId = '733998011689-eftqrm2jtda6tclund83kv6vg95t85r3.apps.googleusercontent.com';
                     
                     // Re-initialize with callback
                     google.accounts.id.initialize({
@@ -2328,7 +2328,7 @@
         // Attempt Google login with popup
         async function attemptGoogleLoginWithPopup() {
             try {
-                const clientId = '393144465047-im95e595muk6qtq4pj3s8t350drnkjpj.apps.googleusercontent.com';
+                const clientId = '733998011689-eftqrm2jtda6tclund83kv6vg95t85r3.apps.googleusercontent.com';
                 const redirectUri = window.location.origin + window.location.pathname;
                 const scope = 'openid%20email%20profile';
                 
