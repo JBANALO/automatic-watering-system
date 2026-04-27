@@ -64,10 +64,18 @@ if ($method === 'GET' && $action === 'poll') {
 
     // Fetch auto mode settings so ESP32 can act locally without a server roundtrip
     $sres = $conn->query("SELECT auto_mode, moisture_threshold FROM system_settings WHERE user_id=$user_id");
-    $settings = ['auto_mode' => 0, 'moisture_threshold' => 50];
+    $settings = ['auto_mode' => 1, 'moisture_threshold' => 50];
     if ($sres && $sres->num_rows > 0) {
         $row = $sres->fetch_assoc();
         $settings = ['auto_mode' => (int)$row['auto_mode'], 'moisture_threshold' => (int)$row['moisture_threshold']];
+    } elseif ($sres && $sres->num_rows === 0) {
+        $conn->query("INSERT INTO system_settings (user_id) VALUES ($user_id)");
+    }
+
+    if ($settings['moisture_threshold'] < 1) {
+        $settings['moisture_threshold'] = 1;
+    } elseif ($settings['moisture_threshold'] > 100) {
+        $settings['moisture_threshold'] = 100;
     }
 
     if (empty($zone_id)) {

@@ -84,7 +84,8 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
     $settings = $settingsResult ? $settingsResult->fetch_assoc() : null;
 
     if (!$settings) {
-        return ['queued' => false, 'action' => null, 'reason' => 'settings_missing'];
+        $conn->query("INSERT INTO system_settings (user_id) VALUES ($user_id)");
+        $settings = ['auto_mode' => 1, 'moisture_threshold' => 50];
     }
 
     $autoMode = intval($settings['auto_mode'] ?? 1) === 1;
@@ -93,6 +94,11 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
     }
 
     $threshold = intval($settings['moisture_threshold'] ?? 50);
+    if ($threshold < 1) {
+        $threshold = 1;
+    } elseif ($threshold > 100) {
+        $threshold = 100;
+    }
     $decision = getAutoDecision($moisture, $tank_level, $threshold);
     $desiredAction = $decision['action'];
 
