@@ -107,7 +107,7 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
     }
 
     // Dedupe: queue only when state transitions.
-    $lastStmt = $conn->prepare("SELECT command_type, created_at FROM commands WHERE zone_id = ? AND command_type IN ('turn_on', 'turn_off') ORDER BY id DESC LIMIT 1");
+    $lastStmt = $conn->prepare("SELECT command_type, created_at FROM commands WHERE zone_id = ? AND command_type IN ('turn_on', 'turn_off') AND status = 'executed' ORDER BY id DESC LIMIT 1");
     if ($lastStmt) {
         $lastStmt->bind_param("i", $zone_id);
         $lastStmt->execute();
@@ -142,6 +142,14 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
                 'upper_threshold' => $decision['upper']
             ];
         }
+    }
+
+    // Cancel any stale pending opposing commands to prevent relay state mismatch
+    $opposingAction = ($desiredAction === 'turn_on') ? 'turn_off' : 'turn_on';
+    $cancel = $conn->prepare("UPDATE commands SET status='cancelled' WHERE zone_id=? AND command_type=? AND status='pending'");
+    if ($cancel) {
+        $cancel->bind_param("is", $zone_id, $opposingAction);
+        $cancel->execute();
     }
 
     $params = json_encode([
