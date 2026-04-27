@@ -8,8 +8,8 @@ const char* AP_SSID = "ESP32-Soil-Monitor";
 const char* AP_PASSWORD = "12345678";
 
 // ==================== PIN CONFIG ====================
-#define SOIL_AO_PIN 32
-#define SOIL_DO_PIN 35
+#define SOIL_AO_PIN 33 // Unused when FORCE_DO_MODE is true.
+#define SOIL_DO_PIN 32
 #define LED_PIN 26
 #define RELAY_PIN 25
 
@@ -18,6 +18,11 @@ const char* AP_PASSWORD = "12345678";
 // dry around ~2680-2700, wet can drop to ~300-900.
 int RAW_DRY = 2690;
 int RAW_WET = 700;
+
+// Auto-calibrate raw range based on observed extremes.
+bool AUTO_CALIBRATE = true;
+int AUTO_CALIBRATE_GUARD = 5; // Ignore tiny noise changes.
+int AUTO_MIN_SPAN = 80;       // Minimum valid span between dry/wet.
 
 // Hysteresis thresholds:
 // ON when moisture <= PUMP_ON_THRESHOLD_PERCENT
@@ -39,6 +44,7 @@ int VIRTUAL_MOISTURE = 55;
 // Most LM393 soil modules output DO=0 when soil is wet after trim-pot tuning.
 bool DO_WET_IS_LOW = true;
 bool usingDoFallback = false;
+bool FORCE_DO_MODE = true; // Use DO pin only when AO is not working.
 
 WebServer server(80);
 
@@ -100,6 +106,37 @@ void applyOutputs() {
 }
 
 void readSoil() {
+  lastDO = digitalRead(SOIL_DO_PIN);
+
+  if (FORCE_DO_MODE) {
+    usingDoFallback = true;
+    bool wet = DO_WET_IS_LOW ? (lastDO == LOW) : (lastDO == HIGH);
+    lastMoisture = wet ? 100 : 0;
+    updateVirtualPumpState();
+    applyOutputs();
+
+    Serial.print("Raw=");
+    Serial.print(lastRaw);
+    Serial.print(" | Moisture=");
+    Serial.print(lastMoisture);
+    Serial.print("% | DO=");
+    Serial.print(lastDO);
+    Serial.print(" | VirtualPump=");
+    Serial.print(virtualPumpOn ? "ON" : "OFF");
+    Serial.print(" | AutoMode=ON | ON<=");
+    Serial.print(PUMP_ON_THRESHOLD_PERCENT);
+    Serial.print(" OFF>=");
+    Serial.print(PUMP_OFF_THRESHOLD_PERCENT);
+    Serial.print(" | RelayMode=");
+    Serial.print(USE_RELAY_OUTPUT ? "ENABLED" : "DISABLED");
+    Serial.print(" | SensorMode=FORCE_DO");
+    Serial.print(" | Cal(D/W)=");
+    Serial.print(RAW_DRY);
+    Serial.print("/");
+    Serial.println(RAW_WET);
+    return;
+  }
+
   long sum = 0;
   for (int i = 0; i < 10; i++) {
     sum += analogRead(SOIL_AO_PIN);
@@ -107,7 +144,6 @@ void readSoil() {
   }
 
   lastRaw = (int)(sum / 10);
-  lastDO = digitalRead(SOIL_DO_PIN);
 
   if (VIRTUAL_MODE) {
     usingDoFallback = false;
@@ -137,9 +173,18 @@ void readSoil() {
     return;
   }
 
+  if (AUTO_CALIBRATE) {
+    if (lastRaw > RAW_DRY + AUTO_CALIBRATE_GUARD) {
+      RAW_DRY = lastRaw;
+    }
+    if (lastRaw < RAW_WET - AUTO_CALIBRATE_GUARD) {
+      RAW_WET = lastRaw;
+    }
+  }
+
   int calSpan = RAW_DRY - RAW_WET;
   if (calSpan < 0) calSpan = -calSpan;
-  bool analogCalibrationValid = calSpan >= 80;
+  bool analogCalibrationValid = calSpan >= AUTO_MIN_SPAN;
 
   if (analogCalibrationValid) {
     usingDoFallback = false;
