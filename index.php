@@ -3007,10 +3007,16 @@
 
         // Check auto mode and update pump status
         function checkAutoMode(sensor) {
-            if (!autoMode) return; // Only run if auto mode is enabled
-            
             const pumpStatusEl = document.getElementById('pumpStatus');
             if (!pumpStatusEl) return;
+
+            if (!autoMode) {
+                // Auto mode is off — clear stale "Auto ON/OFF" text and show manual state
+                autoPumpState = false;
+                pumpStatusEl.textContent = systemRunning ? 'Manual ON' : 'Manual OFF';
+                pumpStatusEl.style.color = systemRunning ? '#10b981' : '#9ca3af';
+                return;
+            }
 
             const enabledZones = zones.filter(z => parseInt(z.enabled, 10) === 1);
             if (enabledZones.length === 0) {
