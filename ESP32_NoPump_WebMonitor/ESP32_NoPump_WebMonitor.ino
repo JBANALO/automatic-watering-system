@@ -39,6 +39,10 @@ bool RELAY_ACTIVE_LOW = false; // Flip relay logic when hardware is inverted.
 bool VIRTUAL_MODE = false;
 int VIRTUAL_MOISTURE = 55;
 
+// Manual override: force pump ON/OFF regardless of sensor.
+bool MANUAL_MODE = false;
+bool MANUAL_PUMP_ON = false;
+
 // Real-sensor fallback:
 // If analog calibration is invalid (dry ~= wet), use DO pin threshold mode.
 // Most LM393 soil modules output DO=0 when soil is wet after trim-pot tuning.
@@ -82,6 +86,10 @@ int toPercent(int raw) {
 }
 
 void updateVirtualPumpState() {
+  if (MANUAL_MODE) {
+    virtualPumpOn = MANUAL_PUMP_ON;
+    return;
+  }
   if (!virtualPumpOn && lastMoisture <= PUMP_ON_THRESHOLD_PERCENT) {
     virtualPumpOn = true;
   } else if (virtualPumpOn && lastMoisture >= PUMP_OFF_THRESHOLD_PERCENT) {
@@ -225,6 +233,7 @@ String htmlPage() {
   String pumpText = virtualPumpOn ? "ON" : "OFF";
   String pumpColor = virtualPumpOn ? "#c0392b" : "#1f7a3f";
   String soilColor = lastMoisture <= PUMP_ON_THRESHOLD_PERCENT ? "#c0392b" : "#1f7a3f";
+  String manualText = MANUAL_MODE ? (MANUAL_PUMP_ON ? "MANUAL ON" : "MANUAL OFF") : "AUTO";
 
   String html;
   html += "<!DOCTYPE html><html><head>";
@@ -246,7 +255,7 @@ String htmlPage() {
   html += "<div class='card'><div class='v'>" + String(lastMoisture) + "%</div><div class='l'>Moisture</div></div>";
   html += "<div class='card'><div class='v'>" + String(lastRaw) + "</div><div class='l'>Raw Analog</div></div>";
   html += "<div class='card'><div class='v' style='color:" + soilColor + "'>" + soilStatus + "</div><div class='l'>Soil Status</div></div>";
-  html += "<div class='card'><div class='v' style='color:" + pumpColor + "'>" + pumpText + "</div><div class='l'>Virtual Pump Decision</div></div>";
+  html += "<div class='card'><div class='v' style='color:" + pumpColor + "'>" + pumpText + "</div><div class='l'>Pump State (" + manualText + ")</div></div>";
   html += "<div class='card'><div class='v' style='font-size:22px'>ON<=" + String(PUMP_ON_THRESHOLD_PERCENT) + "% / OFF>=" + String(PUMP_OFF_THRESHOLD_PERCENT) + "%</div><div class='l'>Auto Thresholds</div></div>";
   html += "<div class='card'><div class='v' style='font-size:22px'>" + String(USE_RELAY_OUTPUT ? "ENABLED" : "DISABLED") + "</div><div class='l'>Relay Output Mode</div></div>";
   html += "<div class='card'><div class='v' style='font-size:22px'>" + String(VIRTUAL_MODE ? "ON" : "OFF") + "</div><div class='l'>Virtual Input Mode</div></div>";
@@ -259,6 +268,13 @@ String htmlPage() {
   html += "<a href='/virtual?mode=on&m=20' style='display:inline-block;margin:4px;padding:8px 12px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none'>Dry 20%</a>";
   html += "<a href='/virtual?mode=on&m=70' style='display:inline-block;margin:4px;padding:8px 12px;background:#1f7a3f;color:#fff;border-radius:8px;text-decoration:none'>Wet 70%</a>";
   html += "<a href='/virtual?mode=off' style='display:inline-block;margin:4px;padding:8px 12px;background:#334155;color:#fff;border-radius:8px;text-decoration:none'>Use Real Sensor</a>";
+  html += "</div>";
+
+  html += "<div class='card'>";
+  html += "<div class='l' style='margin-bottom:10px'>Manual Override</div>";
+  html += "<a href='/manual?mode=on' style='display:inline-block;margin:4px;padding:8px 12px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none'>Force ON</a>";
+  html += "<a href='/manual?mode=off' style='display:inline-block;margin:4px;padding:8px 12px;background:#1f7a3f;color:#fff;border-radius:8px;text-decoration:none'>Force OFF</a>";
+  html += "<a href='/manual?mode=auto' style='display:inline-block;margin:4px;padding:8px 12px;background:#334155;color:#fff;border-radius:8px;text-decoration:none'>Back to AUTO</a>";
   html += "</div>";
 
   html += "<div class='card'><div class='l'>Tip: If Sensor Mode shows DO_FALLBACK, slowly turn the sensor module trim-pot until DO changes between dry and wet.</div></div>";
@@ -279,6 +295,8 @@ void handleJson() {
   json += "\"moisture\":" + String(lastMoisture) + ",";
   json += "\"do\":" + String(lastDO) + ",";
   json += "\"virtual_pump\":\"" + String(virtualPumpOn ? "ON" : "OFF") + "\",";
+  json += "\"manual_mode\":" + String(MANUAL_MODE ? "true" : "false") + ",";
+  json += "\"manual_pump\":\"" + String(MANUAL_PUMP_ON ? "ON" : "OFF") + "\",";
   json += "\"relay_mode\":\"" + String(USE_RELAY_OUTPUT ? "ENABLED" : "DISABLED") + "\",";
   json += "\"virtual_mode\":\"" + String(VIRTUAL_MODE ? "ON" : "OFF") + "\",";
   json += "\"sensor_mode\":\"" + String(usingDoFallback ? "DO_FALLBACK" : "AO_CALIBRATED") + "\",";
@@ -286,6 +304,24 @@ void handleJson() {
   json += "\"raw_wet\":" + String(RAW_WET);
   json += "}";
   server.send(200, "application/json", json);
+}
+
+void handleManualMode() {
+  if (server.hasArg("mode")) {
+    String mode = server.arg("mode");
+    if (mode == "on") {
+      MANUAL_MODE = true;
+      MANUAL_PUMP_ON = true;
+    } else if (mode == "off") {
+      MANUAL_MODE = true;
+      MANUAL_PUMP_ON = false;
+    } else if (mode == "auto") {
+      MANUAL_MODE = false;
+    }
+  }
+
+  server.sendHeader("Location", "/");
+  server.send(302, "text/plain", "Redirecting...");
 }
 
 void handleVirtualMode() {
@@ -365,6 +401,7 @@ void setup() {
   server.on("/", handleRoot);
   server.on("/api/status", handleJson);
   server.on("/virtual", handleVirtualMode);
+  server.on("/manual", handleManualMode);
   server.begin();
 
   Serial.println("Web server started.");
