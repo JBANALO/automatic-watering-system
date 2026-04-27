@@ -188,6 +188,74 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
     ];
 }
 
+// Check schedules and queue pump commands when inside/outside a scheduled window
+function checkAndQueueSchedule($conn, $device, $zone_id) {
+    $user_id  = intval($device['user_id']);
+    $device_id = intval($device['id']);
+
+    // Current time in Philippines timezone (UTC+8)
+    $now        = new DateTime('now', new DateTimeZone('Asia/Manila'));
+    $currentTime = $now->format('H:i:s');
+
+    // Get all enabled schedules for this zone
+    $stmt = $conn->prepare("SELECT * FROM schedules WHERE zone_id = ? AND user_id = ? AND enabled = 1");
+    $stmt->bind_param("ii", $zone_id, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if (!$result) return;
+
+    $inWindow   = false;
+    $activeScheduleId = null;
+    while ($row = $result->fetch_assoc()) {
+        $startDt = DateTime::createFromFormat('H:i:s', $row['start_time'], new DateTimeZone('Asia/Manila'));
+        if (!$startDt) continue;
+        $endDt = clone $startDt;
+        $endDt->modify('+' . intval($row['duration']) . ' minutes');
+        if ($currentTime >= $startDt->format('H:i:s') && $currentTime < $endDt->format('H:i:s')) {
+            $inWindow = true;
+            $activeScheduleId = $row['id'];
+            break;
+        }
+    }
+
+    // Get the latest executed command to check state
+    $lastStmt = $conn->prepare("SELECT command_type, params FROM commands WHERE zone_id = ? AND status = 'executed' ORDER BY id DESC LIMIT 1");
+    $lastStmt->bind_param("i", $zone_id);
+    $lastStmt->execute();
+    $lastCmd = $lastStmt->get_result()->fetch_assoc();
+
+    // Check for any pending/sent command to avoid duplicates
+    $pendStmt = $conn->prepare("SELECT command_type FROM commands WHERE zone_id = ? AND status IN ('pending','sent') ORDER BY id DESC LIMIT 1");
+    $pendStmt->bind_param("i", $zone_id);
+    $pendStmt->execute();
+    $pendCmd = $pendStmt->get_result()->fetch_assoc();
+    $pendingAction = $pendCmd ? $pendCmd['command_type'] : null;
+
+    if ($inWindow) {
+        // Inside window: ensure pump is ON
+        $alreadyOn = ($lastCmd && $lastCmd['command_type'] === 'turn_on') || $pendingAction === 'turn_on';
+        if (!$alreadyOn) {
+            // Cancel any pending turn_off
+            $conn->query("UPDATE commands SET status='cancelled' WHERE zone_id=$zone_id AND command_type='turn_off' AND status='pending'");
+            $params = json_encode(['source' => 'schedule', 'schedule_id' => $activeScheduleId]);
+            $ins = $conn->prepare("INSERT INTO commands (zone_id, device_id, command_type, params) VALUES (?, ?, 'turn_on', ?)");
+            $ins->bind_param("iis", $zone_id, $device_id, $params);
+            $ins->execute();
+        }
+    } else {
+        // Outside window: if last turn_on was from a schedule, turn off
+        if ($lastCmd && $lastCmd['command_type'] === 'turn_on' && $pendingAction !== 'turn_off') {
+            $lastParams = json_decode($lastCmd['params'] ?? '{}', true);
+            if (($lastParams['source'] ?? '') === 'schedule') {
+                $params = json_encode(['source' => 'schedule_end']);
+                $ins = $conn->prepare("INSERT INTO commands (zone_id, device_id, command_type, params) VALUES (?, ?, 'turn_off', ?)");
+                $ins->bind_param("iis", $zone_id, $device_id, $params);
+                $ins->execute();
+            }
+        }
+    }
+}
+
 // Authenticate device via API key
 function authenticateDevice($conn) {
     $api_key = $_SERVER['HTTP_X_API_KEY'] ?? '';
@@ -287,6 +355,9 @@ if ($method === 'POST' && $action === 'submit') {
             $update = $conn->prepare("UPDATE zones SET moisture_level = ? WHERE id = ?");
             $update->bind_param("ii", $moisture, $zone_id);
             $update->execute();
+
+            // Schedule-based control: check if current time is within a scheduled window
+            checkAndQueueSchedule($conn, $device, $zone_id);
 
             // Auto-control: queue relay command based on latest moisture and system settings.
             $autoResult = queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_level);
