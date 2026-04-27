@@ -3790,6 +3790,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('authSection').style.display = 'none';
             loadDashboard().catch(() => {
                 document.getElementById('authSection').style.display = 'flex';
             });
