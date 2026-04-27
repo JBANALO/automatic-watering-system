@@ -1819,7 +1819,7 @@
                                     Moisture Threshold
                                 </label>
                                 <input type="range" id="thresholdSlider" min="30" max="80" value="50" 
-                                       style="width: 100%;" oninput="updateThreshold(this.value)">
+                                       style="width: 100%;" oninput="previewThreshold(this.value)" onchange="updateThreshold(this.value)">
                                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666; margin-top: 5px;">
                                     <span>30%</span>
                                     <span id="thresholdValue" style="font-weight: 600; color: #667eea;">50%</span>
@@ -3318,17 +3318,26 @@
             updateUISettings();
         }
 
-        // Update threshold
+        // Preview threshold (display only, no DB save)
+        function previewThreshold(value) {
+            document.getElementById('thresholdValue').textContent = value + '%';
+        }
+
+        // Update threshold (saves to DB on slider release)
         async function updateThreshold(value) {
             moistureThreshold = parseInt(value);
             document.getElementById('thresholdValue').textContent = value + '%';
             
             try {
-                await fetch(API_BASE + 'system.php?action=update', {
+                const res = await fetch(API_BASE + 'system.php?action=update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ moisture_threshold: moistureThreshold })
                 });
+                const data = await res.json();
+                if (data.status !== 'success') {
+                    console.error('Threshold save failed:', data.message);
+                }
             } catch (error) {
                 console.error('Error updating threshold:', error);
             }
