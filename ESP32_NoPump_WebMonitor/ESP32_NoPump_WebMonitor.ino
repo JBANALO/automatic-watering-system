@@ -32,7 +32,7 @@ int PUMP_OFF_THRESHOLD_PERCENT = 70;
 
 bool USE_LED_INDICATOR = true;
 bool USE_RELAY_OUTPUT = true; // Enable relay output for hardware pump control.
-bool RELAY_ACTIVE_LOW = true;  // Most relay modules are active LOW.
+bool RELAY_ACTIVE_LOW = false; // Flip relay logic when hardware is inverted.
 
 // Virtual input mode for presentation when sensor hardware is unstable.
 // Default is OFF for real-time sensor operation.
@@ -42,7 +42,7 @@ int VIRTUAL_MOISTURE = 55;
 // Real-sensor fallback:
 // If analog calibration is invalid (dry ~= wet), use DO pin threshold mode.
 // Most LM393 soil modules output DO=0 when soil is wet after trim-pot tuning.
-bool DO_WET_IS_LOW = true;
+bool DO_WET_IS_LOW = false;
 bool usingDoFallback = false;
 bool FORCE_DO_MODE = true; // Use DO pin only when AO is not working.
 
