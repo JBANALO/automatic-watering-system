@@ -177,6 +177,8 @@ if ($result) {
 $columnsToAdd = [
     'first_name' => "ALTER TABLE users ADD COLUMN first_name VARCHAR(100)",
     'last_name' => "ALTER TABLE users ADD COLUMN last_name VARCHAR(100)",
+    'middle_name' => "ALTER TABLE users ADD COLUMN middle_name VARCHAR(100) NULL",
+    'birthdate' => "ALTER TABLE users ADD COLUMN birthdate DATE NULL",
     'email_verified' => "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0",
     'verification_code' => "ALTER TABLE users ADD COLUMN verification_code VARCHAR(255)",
     'verification_code_expires' => "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME",

@@ -1654,6 +1654,14 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label for="regMiddleName">Middle Name <span style="color:#aaa;font-size:0.85em;">(optional)</span></label>
+                    <input type="text" id="regMiddleName" placeholder="Middle name">
+                </div>
+                <div class="form-group">
+                    <label for="regBirthdate">Birthdate</label>
+                    <input type="date" id="regBirthdate" max="">
+                </div>
+                <div class="form-group">
                     <label for="regEmail">Email</label>
                     <input type="email" id="regEmail" placeholder="Enter email">
                 </div>
@@ -2216,11 +2224,24 @@
             const username = document.getElementById('regUsername').value;
             const firstName = document.getElementById('regFirstName').value;
             const lastName = document.getElementById('regLastName').value;
+            const middleName = document.getElementById('regMiddleName').value;
+            const birthdate = document.getElementById('regBirthdate').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
 
-            if (!username || !firstName || !lastName || !email || !password) {
-                showError('Please fill all fields');
+            if (!username || !firstName || !lastName || !birthdate || !email || !password) {
+                showError('Please fill all required fields');
+                return;
+            }
+
+            // Age validation: must be 18+
+            const today = new Date();
+            const dob = new Date(birthdate);
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+            if (age < 18) {
+                showError('You must be 18 years old or above to register.');
                 return;
             }
 
@@ -2228,7 +2249,7 @@
                 const response = await fetch(API_BASE + 'auth.php?action=register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, firstName, lastName, email, password })
+                    body: JSON.stringify({ username, firstName, middleName, lastName, birthdate, email, password })
                 });
 
                 const data = await response.json();

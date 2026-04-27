@@ -112,15 +112,31 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
 }
 
 function registerUser($input, $conn) {
-    $username = $conn->real_escape_string($input['username'] ?? '');
-    $firstName = $conn->real_escape_string($input['firstName'] ?? '');
-    $lastName = $conn->real_escape_string($input['lastName'] ?? '');
-    $email = $conn->real_escape_string($input['email'] ?? '');
-    $password = $input['password'] ?? '';
-    
-    if (empty($username) || empty($firstName) || empty($lastName) || empty($email) || empty($password)) {
+    $username   = $conn->real_escape_string($input['username'] ?? '');
+    $firstName  = $conn->real_escape_string($input['firstName'] ?? '');
+    $lastName   = $conn->real_escape_string($input['lastName'] ?? '');
+    $middleName = $conn->real_escape_string($input['middleName'] ?? '');
+    $birthdate  = $conn->real_escape_string($input['birthdate'] ?? '');
+    $email      = $conn->real_escape_string($input['email'] ?? '');
+    $password   = $input['password'] ?? '';
+
+    if (empty($username) || empty($firstName) || empty($lastName) || empty($birthdate) || empty($email) || empty($password)) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Missing required fields']);
+        return;
+    }
+
+    // Server-side age validation (18+)
+    $dob = DateTime::createFromFormat('Y-m-d', $birthdate);
+    if (!$dob) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid birthdate format']);
+        return;
+    }
+    $age = $dob->diff(new DateTime())->y;
+    if ($age < 18) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'You must be 18 years old or above to register.']);
         return;
     }
     
@@ -143,8 +159,9 @@ function registerUser($input, $conn) {
     $verificationCode = generateVerificationCode();
     $verificationCodeHash = password_hash($verificationCode, PASSWORD_BCRYPT);
     
-    $sql = "INSERT INTO users (username, first_name, last_name, email, password, verification_code, verification_code_expires, email_verified) 
-            VALUES ('$username', '$firstName', '$lastName', '$email', '$hashed', '$verificationCodeHash', DATE_ADD(NOW(), INTERVAL 5 MINUTE), 0)";
+    $middleNameSql = empty($middleName) ? 'NULL' : "'$middleName'";
+    $sql = "INSERT INTO users (username, first_name, middle_name, last_name, birthdate, email, password, verification_code, verification_code_expires, email_verified) 
+            VALUES ('$username', '$firstName', $middleNameSql, '$lastName', '$birthdate', '$email', '$hashed', '$verificationCodeHash', DATE_ADD(NOW(), INTERVAL 5 MINUTE), 0)";
     
     if ($conn->query($sql)) {
         $user_id = $conn->insert_id;
