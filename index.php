@@ -1642,7 +1642,7 @@
 </head>
 <body>
     <!-- Login/Register Section -->
-    <div id="authSection" class="auth-container" style="display: none;">
+    <div id="authSection" class="auth-container" style="display: flex;">
         <div class="auth-card">
             <h1> Irrigation</h1>
             <p class="subtitle">Smart Garden Control</p>
@@ -2794,7 +2794,10 @@
         // Load dashboard after login
         async function loadDashboard() {
             try {
-                const userResponse = await fetch(API_BASE + 'auth.php?action=user');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const userResponse = await fetch(API_BASE + 'auth.php?action=user', { signal: controller.signal });
+            clearTimeout(timeoutId);
                 const userData = await userResponse.json();
 
                 if (userData.status === 'success') {
@@ -3926,7 +3929,6 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('authSection').style.display = 'none';
             loadDashboard().catch(() => {
                 document.getElementById('authSection').style.display = 'flex';
             });
