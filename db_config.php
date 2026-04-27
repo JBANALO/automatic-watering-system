@@ -2,14 +2,8 @@
 ini_set('display_errors', '0');
 error_reporting(0);
 
-// ─── Session Configuration (must run before session_start in any file) ──────
+// ─── Session cookie params (must run before session_start in any file) ──────
 if (session_status() === PHP_SESSION_NONE) {
-    // Use a writable session save path (Railway containers expose /tmp)
-    $sessionPath = sys_get_temp_dir();
-    if ($sessionPath && is_writable($sessionPath)) {
-        session_save_path($sessionPath);
-    }
-
     // Detect HTTPS (Railway terminates TLS and forwards via X-Forwarded-Proto)
     $isHttps = (
         (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
@@ -290,6 +284,14 @@ class DbSessionHandler implements SessionHandlerInterface {
         return true;
     }
 }
+// Ensure sessions table exists (needed even when full schema setup is skipped on Railway)
+$conn->query("CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    data TEXT,
+    expires DATETIME NOT NULL,
+    INDEX idx_expires (expires)
+)");
+
 $_dbSessionHandler = new DbSessionHandler($conn);
 session_set_save_handler($_dbSessionHandler, true);
 
