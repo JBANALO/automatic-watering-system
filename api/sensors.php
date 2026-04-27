@@ -47,6 +47,12 @@ function getLatestSensorData($user_id, $conn) {
         WHERE z.user_id = $user_id
         ORDER BY z.id ASC
     ");
+
+    if ($result === false) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to load sensor data']);
+        return;
+    }
     
     $data = [];
     while ($row = $result->fetch_assoc()) {
@@ -67,6 +73,12 @@ function getSensorHistory($user_id, $conn) {
         ORDER BY sd.recorded_at DESC
         LIMIT $limit
     ");
+
+    if ($result === false) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to load sensor history']);
+        return;
+    }
     
     $history = [];
     while ($row = $result->fetch_assoc()) {
