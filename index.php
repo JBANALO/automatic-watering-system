@@ -2257,7 +2257,14 @@
                     body: JSON.stringify({ username, password })
                 });
 
-                const data = await response.json();
+                const raw = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                } catch (parseError) {
+                    showError('Login failed: server returned invalid JSON (HTTP ' + response.status + ')');
+                    return;
+                }
                 if (data.status === 'success') {
                     await loadDashboard();
                 } else if (data.requires_verification) {
@@ -2794,11 +2801,17 @@
         // Load dashboard after login
         async function loadDashboard() {
             try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const userResponse = await fetch(API_BASE + 'auth.php?action=user', { signal: controller.signal });
-            clearTimeout(timeoutId);
-                const userData = await userResponse.json();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const userResponse = await fetch(API_BASE + 'auth.php?action=user', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const raw = await userResponse.text();
+                let userData;
+                try {
+                    userData = JSON.parse(raw);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON from auth endpoint (HTTP ' + userResponse.status + ')');
+                }
 
                 if (userData.status === 'success') {
                     currentUser = userData.user;
