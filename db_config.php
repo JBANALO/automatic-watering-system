@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', '0');
+error_reporting(0);
 // Database Configuration
 // For local: use hardcoded values
 // For Railway: parse MYSQL_URL environment variable
@@ -234,3 +236,4 @@ session_set_save_handler($_dbSessionHandler, true);
 
 // Set header for JSON responses
 header('Content-Type: application/json');
+// No closing PHP tag intentionally - prevents trailing newline that breaks session cookies
