@@ -75,13 +75,6 @@ if ($method === 'GET' && $action === 'poll') {
         exit;
     }
     
-    // Mark all but the latest pending command as failed (avoid replaying stale commands)
-    $maxRes = $conn->query("SELECT MAX(id) AS max_id FROM commands WHERE zone_id=$zone_id AND status='pending'");
-    if ($maxRes && ($maxRow = $maxRes->fetch_assoc()) && $maxRow['max_id']) {
-        $maxId = intval($maxRow['max_id']);
-        $conn->query("UPDATE commands SET status='failed' WHERE zone_id=$zone_id AND status='pending' AND id < $maxId");
-    }
-
     // Get only the latest pending command for this zone
     $stmt = $conn->prepare("
         SELECT id, command_type, params, created_at 

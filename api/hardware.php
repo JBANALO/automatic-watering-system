@@ -150,13 +150,8 @@ function queueAutoCommandIfNeeded($conn, $device, $zone_id, $moisture, $tank_lev
         }
     }
 
-    // Cancel any stale pending opposing commands to prevent relay state mismatch
-    $opposingAction = ($desiredAction === 'turn_on') ? 'turn_off' : 'turn_on';
-    $cancel = $conn->prepare("UPDATE commands SET status='failed' WHERE zone_id=? AND command_type=? AND status='pending'");
-    if ($cancel) {
-        $cancel->bind_param("is", $zone_id, $opposingAction);
-        $cancel->execute();
-    }
+    // Cancel ALL existing pending commands for this zone to avoid stale command pileup
+    $conn->query("UPDATE commands SET status='failed' WHERE zone_id=$zone_id AND status='pending'");
 
     $params = json_encode([
         'source' => 'auto_mode_sensor',
