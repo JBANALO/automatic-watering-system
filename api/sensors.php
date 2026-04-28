@@ -24,25 +24,24 @@ if ($method === 'GET' && $action === 'latest') {
 }
 
 function getLatestSensorData($user_id, $conn) {
+    // Pick the latest sensor_data row per zone via a simple correlated subquery on sensor_data.id.
+    // Much faster than the previous derived-table + recorded_at match (which timed out at scale).
     $result = $conn->query("
         SELECT 
             z.id,
             z.zone_name,
-            s.moisture_level,
-            s.temperature,
-            s.humidity,
-            s.rainfall,
-            s.tank_level,
-            s.recorded_at
+            sd.moisture_level,
+            sd.temperature,
+            sd.humidity,
+            sd.rainfall,
+            sd.tank_level,
+            sd.recorded_at
         FROM zones z
-        LEFT JOIN (
-            SELECT * FROM sensor_data 
-            WHERE zone_id IN (SELECT id FROM zones WHERE user_id=$user_id)
-            ORDER BY zone_id, recorded_at DESC
-        ) s ON z.id = s.zone_id AND s.recorded_at = (
-            SELECT recorded_at FROM sensor_data 
-            WHERE zone_id = z.id 
-            ORDER BY recorded_at DESC LIMIT 1
+        LEFT JOIN sensor_data sd ON sd.id = (
+            SELECT id FROM sensor_data
+            WHERE zone_id = z.id
+            ORDER BY recorded_at DESC, id DESC
+            LIMIT 1
         )
         WHERE z.user_id = $user_id
         ORDER BY z.id ASC
