@@ -2976,6 +2976,11 @@
                 ? sensor.tank_level
                 : null;
             if (rawLevel === null) {
+                // Fallback: use last known live tank level if we have ever seen one
+                if (hasLiveTankLevel) {
+                    const cached = Number(currentTankLevel);
+                    return Number.isFinite(cached) ? cached : null;
+                }
                 return null;
             }
 
