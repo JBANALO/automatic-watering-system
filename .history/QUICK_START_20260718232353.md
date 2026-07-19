@@ -14,7 +14,7 @@
 4. If you see errors, check MySQL is running
 
 ### Step 3: Access the Application
-1. Go to: `http://localhost/automatic-watering-system/indwx.html`
+1. Go to: `http://localhost/automatic-watering-system/index.php`
 2. Click **Sign Up**
 3. Enter username, email, and password
 4. Click **Create Account**
@@ -41,7 +41,7 @@
 
 The system is fully responsive! Open the app on your phone:
 1. Find your computer's IP address (e.g., 192.168.x.x)
-2. On mobile browser: `http://192.168.x.x/automatic-watering-system/indwx.html`
+2. On mobile browser: `http://192.168.x.x/automatic-watering-system/index.php`
 3. App should work perfectly on mobile devices
 
 ## 🔧 Backend API Structure

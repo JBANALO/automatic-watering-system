@@ -40,7 +40,7 @@ const char* API_KEY    = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c
 #define RELAY_PIN     14    // Water pump relay (GPIO 14, no special functions)
 
 // Relay driven via PN2222A NPN transistor as level shifter (active HIGH from firmware POV)
-bool RELAY_ACTIVE_LOW = true;
+bool RELAY_ACTIVE_LOW = false;
 
 // ─── Tank Calibration (adjust to your tank) ───────────────────────────────────
 #define TANK_HEIGHT_CM 100.0  // Height of your water tank in cm
@@ -259,13 +259,8 @@ void connectWiFi() {
 // ─── Setup & Loop ─────────────────────────────────────────────────────────────
 
 void setup() {
-    // Force relay OFF as early as possible during boot.
-    pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, RELAY_ACTIVE_LOW ? HIGH : LOW);
-    pumpState = false;
-
     Serial.begin(115200);
-    delay(100);
+    delay(500);
 
     pinMode(MOISTURE_DO_PIN, INPUT);
     pinMode(TRIG_PIN,  OUTPUT);

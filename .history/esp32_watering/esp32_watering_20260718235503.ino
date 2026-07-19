@@ -40,7 +40,7 @@ const char* API_KEY    = "3123400a54782ebfd0f72064f72a452a064cd9383499e269dc209c
 #define RELAY_PIN     14    // Water pump relay (GPIO 14, no special functions)
 
 // Relay driven via PN2222A NPN transistor as level shifter (active HIGH from firmware POV)
-bool RELAY_ACTIVE_LOW = true;
+bool RELAY_ACTIVE_LOW = false;
 
 // ─── Tank Calibration (adjust to your tank) ───────────────────────────────────
 #define TANK_HEIGHT_CM 100.0  // Height of your water tank in cm
@@ -71,14 +71,6 @@ void setRelay(bool on) {
 
 // Forward declarations
 void acknowledgeCommand(int command_id, const char* status);
-
-bool beginApiRequest(HTTPClient &http, WiFiClientSecure &secureClient, const String &url) {
-    if (url.startsWith("https://")) {
-        secureClient.setInsecure();
-        return http.begin(secureClient, url);
-    }
-    return http.begin(url);
-}
 
 // ─── Sensor Readers ───────────────────────────────────────────────────────────
 
@@ -120,12 +112,11 @@ void submitSensorData() {
     }
 
     WiFiClientSecure client;
+    client.setInsecure(); // Skip SSL cert verification (Railway uses valid cert, but no CA bundle on ESP32)
+
     HTTPClient http;
     String url = String(SERVER_URL) + "/api/hardware.php?action=submit";
-    if (!beginApiRequest(http, client, url)) {
-        Serial.println("[SUBMIT] Failed to initialize HTTP client");
-        return;
-    }
+    http.begin(client, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-API-Key", API_KEY);
     http.setTimeout(10000);
@@ -156,13 +147,11 @@ void submitSensorData() {
 
 void pollAndExecuteCommands() {
     WiFiClientSecure client;
+    client.setInsecure();
 
     HTTPClient http;
     String url = String(SERVER_URL) + "/api/device_control.php?action=poll";
-    if (!beginApiRequest(http, client, url)) {
-        Serial.println("[POLL] Failed to initialize HTTP client");
-        return;
-    }
+    http.begin(client, url);
     http.addHeader("X-API-Key", API_KEY);
     http.setTimeout(10000);
 
@@ -212,13 +201,11 @@ void pollAndExecuteCommands() {
 
 void acknowledgeCommand(int command_id, const char* status) {
     WiFiClientSecure client;
+    client.setInsecure();
 
     HTTPClient http;
     String url = String(SERVER_URL) + "/api/device_control.php?action=acknowledge";
-    if (!beginApiRequest(http, client, url)) {
-        Serial.println("[ACK] Failed to initialize HTTP client");
-        return;
-    }
+    http.begin(client, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-API-Key", API_KEY);
     http.setTimeout(10000);
@@ -259,13 +246,8 @@ void connectWiFi() {
 // ─── Setup & Loop ─────────────────────────────────────────────────────────────
 
 void setup() {
-    // Force relay OFF as early as possible during boot.
-    pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, RELAY_ACTIVE_LOW ? HIGH : LOW);
-    pumpState = false;
-
     Serial.begin(115200);
-    delay(100);
+    delay(500);
 
     pinMode(MOISTURE_DO_PIN, INPUT);
     pinMode(TRIG_PIN,  OUTPUT);

@@ -41,7 +41,7 @@ automatic-watering-system/
    - Database will be created automatically
 
 4. **Access Application**
-   - Open: `http://localhost/automatic-watering-system/indwx.html`
+   - Open: `http://localhost/automatic-watering-system/index.php`
    - Click "Sign Up" to create an account
    - Login with your credentials
 

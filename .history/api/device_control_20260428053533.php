@@ -59,20 +59,37 @@ function authenticateDevice($conn) {
 // Poll for pending commands
 if ($method === 'GET' && $action === 'poll') {
     $device = authenticateDevice($conn);
-    $zone_id = $device['zone_id'];
-    
+    $zone_id  = $device['zone_id'];
+    $user_id  = $device['user_id'];
+
+    // Fetch auto mode settings so ESP32 can act locally without a server roundtrip
+    $sres = $conn->query("SELECT auto_mode, moisture_threshold FROM system_settings WHERE user_id=$user_id");
+    $settings = ['auto_mode' => 1, 'moisture_threshold' => 50];
+    if ($sres && $sres->num_rows > 0) {
+        $row = $sres->fetch_assoc();
+        $settings = ['auto_mode' => (int)$row['auto_mode'], 'moisture_threshold' => (int)$row['moisture_threshold']];
+    } elseif ($sres && $sres->num_rows === 0) {
+        $conn->query("INSERT INTO system_settings (user_id) VALUES ($user_id)");
+    }
+
+    if ($settings['moisture_threshold'] < 1) {
+        $settings['moisture_threshold'] = 1;
+    } elseif ($settings['moisture_threshold'] > 100) {
+        $settings['moisture_threshold'] = 100;
+    }
+
     if (empty($zone_id)) {
-        echo json_encode(['status' => 'success', 'commands' => []]);
+        echo json_encode(['status' => 'success', 'commands' => [], 'settings' => $settings]);
         exit;
     }
     
-    // Get pending commands for this zone
+    // Get only the latest pending command for this zone
     $stmt = $conn->prepare("
         SELECT id, command_type, params, created_at 
         FROM commands 
         WHERE zone_id = ? AND status = 'pending' 
-        ORDER BY created_at ASC 
-        LIMIT 10
+        ORDER BY id DESC 
+        LIMIT 1
     ");
     $stmt->bind_param("i", $zone_id);
     $stmt->execute();
@@ -96,7 +113,8 @@ if ($method === 'GET' && $action === 'poll') {
     echo json_encode([
         'status' => 'success',
         'commands' => $commands,
-        'count' => count($commands)
+        'count' => count($commands),
+        'settings' => $settings
     ]);
 }
 

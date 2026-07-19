@@ -37,7 +37,7 @@ if ($test_query && $test_query->num_rows > 0) {
     echo "<div class='info'>
         <h3>Next Steps:</h3>
         <ol>
-            <li><strong>Access the Application:</strong> <a href='indwx.html'>Click here to open the dashboard</a></li>
+            <li><strong>Access the Application:</strong> <a href='index.php'>Click here to open the dashboard</a></li>
             <li><strong>Create an Account:</strong> Click 'Sign Up' and register a new user</li>
             <li><strong>Login:</strong> Use your credentials to login</li>
             <li><strong>Configure Your System:</strong> Set up zones, schedules, and settings</li>
