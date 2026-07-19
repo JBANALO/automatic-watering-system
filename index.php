@@ -2006,8 +2006,8 @@
 
                             <div class="alert" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
                                 <strong> Scheduled Runs:</strong><br>
-                                <div id="morningScheduleDisplay" style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Morning: 6:00 AM for 30 minutes</div>
-                                <div id="eveningScheduleDisplay" style="margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;">Evening: 6:00 PM for 30 minutes</div>
+                                <div id="morningScheduleDisplay" style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;"></div>
+                                <div id="eveningScheduleDisplay" style="margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; font-size: 0.95em;"></div>
                             </div>
                         </div>
                     </div>
@@ -3830,38 +3830,102 @@
             const eveningTime = document.getElementById('eveningTime')?.value || '18:00';
             const eveningDuration = parseInt(document.getElementById('eveningDuration')?.value || '30', 10);
 
-            if (!morningTime || morningDuration <= 0 || !eveningTime || eveningDuration <= 0) {
-                alert('⚠️ Please enter valid times and durations.');
+            const hasMorning = !!morningTime && morningDuration > 0;
+            const hasEvening = !!eveningTime && eveningDuration > 0;
+
+            if (!hasMorning && !hasEvening) {
+                alert('⚠️ Please set at least one valid schedule.');
                 return;
             }
 
             // Save to localStorage
-            const scheduleData = {
-                morning: { time: morningTime, duration: morningDuration },
-                evening: { time: eveningTime, duration: eveningDuration }
-            };
+            const scheduleData = {};
+            if (hasMorning) {
+                scheduleData.morning = { time: morningTime, duration: morningDuration };
+            }
+            if (hasEvening) {
+                scheduleData.evening = { time: eveningTime, duration: eveningDuration };
+            }
+
             const userKey = currentUser?.id || currentUser?.username || 'guest';
             localStorage.setItem('schedules:' + userKey, JSON.stringify(scheduleData));
 
             // Update display with next scheduled run
-            updateNextScheduleDisplay(morningTime, morningDuration, eveningTime, eveningDuration);
+            updateNextScheduleDisplay(scheduleData.morning, scheduleData.evening);
 
             // Show success message
             alert('Schedule saved successfully! ✅\n\nYour irrigation times have been updated.');
         }
 
-        function updateNextScheduleDisplay(morningTime, morningDuration, eveningTime, eveningDuration) {
-            updateScheduleDisplay(morningTime, morningDuration, 'morningScheduleDisplay');
-            updateScheduleDisplay(eveningTime, eveningDuration, 'eveningScheduleDisplay');
+        function updateNextScheduleDisplay(morningSchedule, eveningSchedule) {
+            updateScheduleDisplay(morningSchedule, 'morningScheduleDisplay', 'morning');
+            updateScheduleDisplay(eveningSchedule, 'eveningScheduleDisplay', 'evening');
         }
         
-        function updateScheduleDisplay(time, duration, elementId) {
+        function updateScheduleDisplay(schedule, elementId, scheduleType) {
             const displayEl = document.getElementById(elementId);
             if (displayEl) {
-                const formattedTime = convert24to12(time);
                 const label = elementId === 'morningScheduleDisplay' ? 'Morning' : 'Evening';
-                displayEl.textContent = label + ': ' + formattedTime + ' for ' + duration + ' minutes';
+
+                if (!schedule || !schedule.time || !schedule.duration || schedule.duration <= 0) {
+                    displayEl.innerHTML = '<span style="color:#64748b;">' + label + ': Not scheduled</span>';
+                    return;
+                }
+
+                const formattedTime = convert24to12(schedule.time);
+                displayEl.innerHTML = '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">'
+                    + '<span>' + label + ': ' + formattedTime + ' for ' + schedule.duration + ' minutes</span>'
+                    + '<button onclick="deleteScheduleRun(\'' + scheduleType + '\')" style="border:none; border-radius:6px; background:#ef4444; color:#fff; padding:4px 10px; font-size:0.82em; cursor:pointer;">Delete</button>'
+                    + '</div>';
             }
+        }
+
+        function deleteScheduleRun(scheduleType) {
+            const userKey = currentUser?.id || currentUser?.username || 'guest';
+            const storageKey = 'schedules:' + userKey;
+            const stored = localStorage.getItem(storageKey);
+
+            if (!stored) {
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(stored);
+            } catch (error) {
+                console.error('Error parsing schedules:', error);
+                return;
+            }
+
+            if (!data[scheduleType]) {
+                return;
+            }
+
+            if (!confirm('Delete this ' + scheduleType + ' schedule?')) {
+                return;
+            }
+
+            delete data[scheduleType];
+
+            if (!data.morning && !data.evening) {
+                localStorage.removeItem(storageKey);
+            } else {
+                localStorage.setItem(storageKey, JSON.stringify(data));
+            }
+
+            if (scheduleType === 'morning') {
+                const morningTime = document.getElementById('morningTime');
+                const morningDuration = document.getElementById('morningDuration');
+                if (morningTime) morningTime.value = '';
+                if (morningDuration) morningDuration.value = '';
+            } else {
+                const eveningTime = document.getElementById('eveningTime');
+                const eveningDuration = document.getElementById('eveningDuration');
+                if (eveningTime) eveningTime.value = '';
+                if (eveningDuration) eveningDuration.value = '';
+            }
+
+            updateNextScheduleDisplay(data.morning, data.evening);
         }
 
         function convert24to12(time24) {
@@ -3882,7 +3946,10 @@
         function loadSavedSchedules() {
             const userKey = currentUser?.id || currentUser?.username || 'guest';
             const stored = localStorage.getItem('schedules:' + userKey);
-            if (!stored) return;
+            if (!stored) {
+                updateNextScheduleDisplay(null, null);
+                return;
+            }
 
             try {
                 const data = JSON.parse(stored);
@@ -3898,9 +3965,7 @@
                     if (eveningTime) eveningTime.value = data.evening.time;
                     if (eveningDuration) eveningDuration.value = data.evening.duration;
                 }
-                if (data.morning && data.evening) {
-                    updateNextScheduleDisplay(data.morning.time, data.morning.duration, data.evening.time, data.evening.duration);
-                }
+                updateNextScheduleDisplay(data.morning, data.evening);
             } catch (error) { 
                 console.error('Error loading schedules:', error);
             }
