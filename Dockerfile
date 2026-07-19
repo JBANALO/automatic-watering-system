@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 RUN a2enmod env
 
+# Prevent "More than one MPM loaded" by disabling alternate MPMs.
+RUN a2dismod mpm_event mpm_worker || true
+
 # Configure PHP to pass environment variables
 RUN echo "variables_order = \"EGPCS\"" >> /usr/local/etc/php/conf.d/variables.ini
 
@@ -28,6 +31,29 @@ RUN echo "PassEnv MYSQL_URL" >> /etc/apache2/apache2.conf && \
 
 RUN chown -R www-data:www-data /var/www/html
 
+# Keep exactly one Apache MPM enabled at runtime to avoid startup crash.
+RUN printf '%s\n' \
+    '#!/bin/bash' \
+    'set -e' \
+    'shopt -s nullglob' \
+    'mpm_loads=(/etc/apache2/mods-enabled/mpm_*.load)' \
+    'if [ ${#mpm_loads[@]} -gt 1 ]; then' \
+    '  keep=""' \
+    '  if [ -f /etc/apache2/mods-enabled/mpm_prefork.load ]; then' \
+    '    keep="/etc/apache2/mods-enabled/mpm_prefork.load"' \
+    '  else' \
+    '    keep="${mpm_loads[0]}"' \
+    '  fi' \
+    '  for f in "${mpm_loads[@]}"; do' \
+    '    if [ "$f" != "$keep" ]; then' \
+    '      base="${f%.load}"' \
+    '      rm -f "$f" "${base}.conf"' \
+    '    fi' \
+    '  done' \
+    'fi' \
+    'exec apache2-foreground' \
+    > /usr/local/bin/start-apache.sh && chmod +x /usr/local/bin/start-apache.sh
+
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["/usr/local/bin/start-apache.sh"]
